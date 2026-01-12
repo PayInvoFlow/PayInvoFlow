@@ -10,7 +10,7 @@
   class="w-full"
   [responsiveLayout]="'scroll'"
   [globalFilterFields]="['invoiceNumber', 'companyName', 'clientName', 'status']"
->
+  >
   <!-- Search bar -->
   <ng-template #caption>
     <div class="flex justify-end p-0">
@@ -25,73 +25,41 @@
           placeholder="Search Invoices"
           pSize="large"
           class="w-full"
-        />
-      </p-iconfield>
-    </div>
-  </ng-template>
+          />
+        </p-iconfield>
+      </div>
+    </ng-template>
 
-  <!-- Header -->
-  <ng-template #header>
-    <!-- Desktop header -->
-    <tr class="hidden sm:table-row">
-      <th>Invoice No</th>
-      <th>Company</th>
-      <th>Client</th>
-      <th>Amount</th>
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-    <!-- Mobile header -->
-    <tr class="sm:hidden">
-      <th class="w-3/4">Invoice Info</th>
-      <th class="w-1/4">Status & Actions</th>
-    </tr>
-  </ng-template>
+    <!-- Header -->
+    <ng-template #header>
+      <!-- Desktop header -->
+      <tr class="hidden sm:table-row">
+        <th>Invoice No</th>
+        <th>Company</th>
+        <th>Client</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+      <!-- Mobile header -->
+      <tr class="sm:hidden">
+        <th class="w-3/4">Invoice Info</th>
+        <th class="w-1/4">Status & Actions</th>
+      </tr>
+    </ng-template>
 
-  <!-- Body -->
-  <ng-template #body let-inv>
-    <!-- Desktop row -->
-    <tr class="hidden sm:table-row">
-      <td>{{ inv.invoiceNumber }}</td>
-      <td>{{ inv.companyName }}</td>
-      <td>{{ inv.clientName }}</td>
-      <td class="font-semibold">{{ inv.amount | currency: 'INR' }}</td>
-      <td class="text-center">
-        <p-tag [value]="inv.status" [severity]="getSeverity(inv.status)"></p-tag>
-      </td>
-      <td>
-        <button
-          pButton
-          pRipple
-          type="button"
-          icon="pi pi-pencil"
-          text
-          (click)="editInvoice(inv)"
-        ></button>
-        <button
-          pButton
-          pRipple
-          type="button"
-          icon="pi pi-download"
-          text
-          class="p-button-sm p-button-info"
-          (click)="downloadPDFInvoice(inv)"
-        ></button>
-      </td>
-    </tr>
-
-    <!-- Mobile row -->
-    <tr class="sm:hidden">
-      <td>
-        <div class="font-semibold">
-          {{ inv.invoiceNumber }} - {{ inv.amount | currency: 'INR' }}
-        </div>
-        <div class="text-gray-600">{{ inv.companyName }}</div>
-        <div class="text-gray-600">{{ inv.clientName }}</div>
-      </td>
-      <td>
-        <div class="flex items-center gap-2">
-          <p-tag [value]="inv.status" class="text-xs" [severity]="getSeverity(inv.status)"></p-tag>
+    <!-- Body -->
+    <ng-template #body let-inv>
+      <!-- Desktop row -->
+      <tr class="hidden sm:table-row">
+        <td>{{ inv.invoiceNumber }}</td>
+        <td>{{ inv.companyName }}</td>
+        <td>{{ inv.clientName }}</td>
+        <td class="font-semibold">{{ inv.amount | currency: 'INR' }}</td>
+        <td class="text-center">
+          <p-tag [value]="inv.status" [severity]="getSeverity(inv.status)"></p-tag>
+        </td>
+        <td>
           <button
             pButton
             pRipple
@@ -109,25 +77,56 @@
             class="p-button-sm p-button-info"
             (click)="downloadPDFInvoice(inv)"
           ></button>
-        </div>
-      </td>
-    </tr>
-  </ng-template>
+        </td>
+      </tr>
 
-  <!-- Empty message -->
-  <ng-template #emptymessage>
-    <tr>
-      <td colspan="6" class="text-center p-6">
-        <ng-container *ngIf="loading; else noData">
-          <p-progressBar mode="indeterminate" [style]="{ height: '5px' }"></p-progressBar>
-        </ng-container>
-        <ng-template #noData>
-          <div class="flex flex-col items-center gap-2 text-gray-500">
-            <i class="pi pi-file-invoice text-2xl"></i>
-            <span class="font-medium">No invoices found</span>
+      <!-- Mobile row -->
+      <tr class="sm:hidden">
+        <td>
+          <div class="font-semibold">
+            {{ inv.invoiceNumber }} - {{ inv.amount | currency: 'INR' }}
           </div>
-        </ng-template>
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
+          <div class="text-gray-600">{{ inv.companyName }}</div>
+          <div class="text-gray-600">{{ inv.clientName }}</div>
+        </td>
+        <td>
+          <div class="flex items-center gap-2">
+            <p-tag [value]="inv.status" class="text-xs" [severity]="getSeverity(inv.status)"></p-tag>
+            <button
+              pButton
+              pRipple
+              type="button"
+              icon="pi pi-pencil"
+              text
+              (click)="editInvoice(inv)"
+            ></button>
+            <button
+              pButton
+              pRipple
+              type="button"
+              icon="pi pi-download"
+              text
+              class="p-button-sm p-button-info"
+              (click)="downloadPDFInvoice(inv)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <!-- Empty message -->
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="text-center p-6">
+          @if (loading) {
+            <p-progressBar mode="indeterminate" [style]="{ height: '5px' }"></p-progressBar>
+          } @else {
+            <div class="flex flex-col items-center gap-2 text-gray-500">
+              <i class="pi pi-file-invoice text-2xl"></i>
+              <span class="font-medium">No invoices found</span>
+            </div>
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>

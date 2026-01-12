@@ -90,14 +90,14 @@ export class SearchCompany implements OnInit {
     this.router.navigate(['/company/form', company._id]);
   }
 
-  getSeverity(status: string) {
+  getSeverity(status: string) : 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined | null {
     switch (status?.toLowerCase()) {
       case 'active':
         return 'success';
       case 'inactive':
         return 'danger';
       case 'pending':
-        return 'warning';
+        return 'warn';
       default:
         return 'info';
     }

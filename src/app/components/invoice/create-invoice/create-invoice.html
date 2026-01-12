@@ -7,12 +7,16 @@
         <label class="block text-base font-semibold mb-1">Invoice No</label>
 
         <p-inputgroup>
-          <p-inputgroup-addon class="w-full" *ngIf="selectedCompany">
-            {{ selectedCompany.invoicePrefix }}
-          </p-inputgroup-addon>
-          <p-inputgroup-addon class="w-full" *ngIf="!selectedCompany">
-            Invoice -
-          </p-inputgroup-addon>
+          @if (selectedCompany) {
+            <p-inputgroup-addon class="w-full">
+              {{ selectedCompany.invoicePrefix }}
+            </p-inputgroup-addon>
+          }
+          @if (!selectedCompany) {
+            <p-inputgroup-addon class="w-full">
+              Invoice -
+            </p-inputgroup-addon>
+          }
 
           <p-floatlabel class="w-1/2">
             <input pInputText [(ngModel)]="invoiceSuffix" placeholder="Invoice No" class="w-full" />
@@ -74,31 +78,35 @@
   </p-card>
 
   <!-- Receiver & Service Provider Details -->
-  <p-card
-    *ngIf="selectedClient || selectedCompany"
-    header="Service Details"
-    class="rounded-2xl shadow-lg"
-  >
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Receiver -->
-      <div *ngIf="selectedClient" class="p-4 border rounded-lg shadow-sm bg-gray-50">
-        <h3 class="text-lg font-semibold mb-2">Details Of Receiver</h3>
-        <p><b>Name:</b> {{ selectedClient?.name || '-' }}</p>
-        <p><b>GSTIN:</b> {{ selectedClient?.gstin || '-' }}</p>
-        <p><b>Address:</b> {{ selectedClient?.address || '-' }}</p>
-        <p><b>State:</b> {{ selectedClient?.state || '-' }}</p>
+  @if (selectedClient || selectedCompany) {
+    <p-card
+      header="Service Details"
+      class="rounded-2xl shadow-lg"
+      >
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Receiver -->
+        @if (selectedClient) {
+          <div class="p-4 border rounded-lg shadow-sm bg-gray-50">
+            <h3 class="text-lg font-semibold mb-2">Details Of Receiver</h3>
+            <p><b>Name:</b> {{ selectedClient?.name || '-' }}</p>
+            <p><b>GSTIN:</b> {{ selectedClient?.gstin || '-' }}</p>
+            <p><b>Address:</b> {{ selectedClient?.address || '-' }}</p>
+            <p><b>State:</b> {{ selectedClient?.state || '-' }}</p>
+          </div>
+        }
+        <!-- Service Provider -->
+        @if (selectedCompany) {
+          <div class="p-4 border rounded-lg shadow-sm bg-gray-50">
+            <h3 class="text-lg font-semibold mb-2">Details Of Service Provider</h3>
+            <p><b>Name:</b> {{ selectedCompany?.name || '-' }}</p>
+            <p><b>GSTIN:</b> {{ selectedCompany?.gstin || '-' }}</p>
+            <p><b>Address:</b> {{ selectedCompany?.address || '-' }}</p>
+            <p><b>State:</b> {{ selectedCompany?.state || '-' }}</p>
+          </div>
+        }
       </div>
-
-      <!-- Service Provider -->
-      <div *ngIf="selectedCompany" class="p-4 border rounded-lg shadow-sm bg-gray-50">
-        <h3 class="text-lg font-semibold mb-2">Details Of Service Provider</h3>
-        <p><b>Name:</b> {{ selectedCompany?.name || '-' }}</p>
-        <p><b>GSTIN:</b> {{ selectedCompany?.gstin || '-' }}</p>
-        <p><b>Address:</b> {{ selectedCompany?.address || '-' }}</p>
-        <p><b>State:</b> {{ selectedCompany?.state || '-' }}</p>
-      </div>
-    </div>
-  </p-card>
+    </p-card>
+  }
 
   <!-- 4. Invoice Items -->
   <p-card header="Invoice Items" class="rounded-2xl shadow-lg">
@@ -148,7 +156,7 @@
         <tr>
           <!-- Date -->
           <td data-label="Date">
-            <ng-container *ngIf="editingIndex === ri; else dateView">
+            @if (editingIndex === ri) {
               <div class="flex w-full gap-3 items-center justify-between align-baseline flex-row">
                 <p-datepicker
                   [(ngModel)]="item.date"
@@ -158,35 +166,33 @@
                   placeholder="Select Date"
                   [ngClass]="{ 'border-red-500': !item.date && submitted }"
                 ></p-datepicker>
-
                 <!-- Up/Down Icons -->
                 <div class="flex flex-col items-center">
                   <button
                     type="button"
                     (click)="changeDate(item, 1)"
                     class="text-gray-600 hover:text-black"
-                  >
+                    >
                     <i class="pi pi-chevron-up"></i>
                   </button>
                   <button
                     type="button"
                     (click)="changeDate(item, -1)"
                     class="text-gray-600 hover:text-black"
-                  >
+                    >
                     <i class="pi pi-chevron-down"></i>
                   </button>
                 </div>
               </div>
-            </ng-container>
-            <ng-template #dateView>
+            } @else {
               <span class="block font-semibold mb-1 md:hidden">Date:</span>
               {{ item.date | date: 'dd/MM/yyyy' }}
-            </ng-template>
+            }
           </td>
 
           <!-- Particulars -->
           <td data-label="Particulars">
-            <ng-container *ngIf="editingIndex === ri; else particularsView">
+            @if (editingIndex === ri) {
               <p-autoComplete
                 [(ngModel)]="item.particulars"
                 [suggestions]="filteredParticulars"
@@ -197,16 +203,15 @@
                 class="w-full"
                 fluid
               ></p-autoComplete>
-            </ng-container>
-            <ng-template #particularsView>
+            } @else {
               <span class="block font-semibold mb-1 md:hidden">Particulars:</span>
               {{ item.particulars }}
-            </ng-template>
+            }
           </td>
 
           <!-- Vehicle No -->
           <td data-label="Vehicle No">
-            <ng-container *ngIf="editingIndex === ri; else vehicleView">
+            @if (editingIndex === ri) {
               <p-autoComplete
                 [(ngModel)]="item.vehicleNo"
                 [suggestions]="filteredVehicles"
@@ -217,185 +222,182 @@
                 class="w-full uppercase"
                 fluid
               ></p-autoComplete>
-            </ng-container>
-            <ng-template #vehicleView>
+            } @else {
               <span class="block font-semibold mb-1 md:hidden">Vehicle No:</span>
               {{ item.vehicleNo ?? 1 }}
-            </ng-template>
+            }
           </td>
 
           <!-- Qty -->
           <td data-label="Qty">
-            <ng-container *ngIf="editingIndex === ri; else qtyView">
+            @if (editingIndex === ri) {
               <input
                 type="number"
                 pInputText
                 [(ngModel)]="item.quantity"
                 (input)="recalculate()"
                 class="w-full md:w-20"
-              />
-            </ng-container>
-            <ng-template #qtyView>
-              <span class="block font-semibold mb-1 md:hidden">Qty:</span>
-              {{ item.quantity }}
-            </ng-template>
-          </td>
+                />
+              } @else {
+                <span class="block font-semibold mb-1 md:hidden">Qty:</span>
+                {{ item.quantity }}
+              }
+            </td>
 
-          <!-- Rate -->
-          <td data-label="Rate">
-            <ng-container *ngIf="editingIndex === ri; else rateView">
-              <input
-                type="number"
-                pInputText
-                [(ngModel)]="item.rate"
-                (input)="recalculate()"
-                (keydown.enter)="saveItem(ri)"
-                class="w-full md:w-24"
-              />
-            </ng-container>
-            <ng-template #rateView>
-              <span class="block font-semibold mb-1 md:hidden">Rate:</span>
-              {{ item.rate }}
-            </ng-template>
-          </td>
-
-          <!-- Amount -->
-          <td data-label="Amount" class="font-bold">
-            <span class="block font-semibold mb-1 md:hidden">Amount:</span>
-            {{ item.amount | currency: 'INR' }}
-          </td>
-
-          <!-- Action -->
-          <td data-label="Action" class="w-36">
-            <div class="flex flex-wrap md:flex-nowrap gap-2 w-full">
-              <!-- Edit / Save Button -->
-              <ng-container *ngIf="editingIndex === ri; else actionView">
-                <button
-                  pButton
-                  label="Save"
-                  icon="pi pi-check"
-                  class="flex-1 md:flex-none w-full md:w-auto p-button-success p-button-sm flex justify-center items-center gap-2"
-                  (click)="saveItem(ri)"
+            <!-- Rate -->
+            <td data-label="Rate">
+              @if (editingIndex === ri) {
+                <input
+                  type="number"
+                  pInputText
+                  [(ngModel)]="item.rate"
+                  (input)="recalculate()"
                   (keydown.enter)="saveItem(ri)"
-                ></button>
+                  class="w-full md:w-24"
+                  />
+                } @else {
+                  <span class="block font-semibold mb-1 md:hidden">Rate:</span>
+                  {{ item.rate }}
+                }
+              </td>
 
-                <button
-                  pButton
-                  label="Delete"
-                  icon="pi pi-trash"
-                  class="flex-1 md:flex-none w-full md:w-auto p-button-danger p-button-sm flex justify-center items-center gap-2"
-                  (click)="removeItem(ri)"
-                ></button>
-              </ng-container>
+              <!-- Amount -->
+              <td data-label="Amount" class="font-bold">
+                <span class="block font-semibold mb-1 md:hidden">Amount:</span>
+                {{ item.amount | currency: 'INR' }}
+              </td>
 
-              <ng-template #actionView>
-                <button
-                  pButton
-                  icon="pi pi-pencil"
-                  label="Edit"
-                  class="flex-1 md:flex-none w-full md:w-auto p-button-info p-button-sm flex justify-center items-center gap-2"
-                  (click)="editItem(ri)"
-                ></button>
+              <!-- Action -->
+              <td data-label="Action" class="w-36">
+                <div class="flex flex-wrap md:flex-nowrap gap-2 w-full">
+                  <!-- Edit / Save Button -->
+                  @if (editingIndex === ri) {
+                    <button
+                      pButton
+                      label="Save"
+                      icon="pi pi-check"
+                      class="flex-1 md:flex-none w-full md:w-auto p-button-success p-button-sm flex justify-center items-center gap-2"
+                      (click)="saveItem(ri)"
+                      (keydown.enter)="saveItem(ri)"
+                    ></button>
+                    <button
+                      pButton
+                      label="Delete"
+                      icon="pi pi-trash"
+                      class="flex-1 md:flex-none w-full md:w-auto p-button-danger p-button-sm flex justify-center items-center gap-2"
+                      (click)="removeItem(ri)"
+                    ></button>
+                  } @else {
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      label="Edit"
+                      class="flex-1 md:flex-none w-full md:w-auto p-button-info p-button-sm flex justify-center items-center gap-2"
+                      (click)="editItem(ri)"
+                    ></button>
+                    <button
+                      pButton
+                      icon="pi pi-trash"
+                      label="Delete"
+                      class="flex-1 md:flex-none w-full md:w-auto p-button-danger p-button-sm flex justify-center items-center gap-2"
+                      (click)="removeItem(ri)"
+                    ></button>
+                  }
 
-                <button
-                  pButton
-                  icon="pi pi-trash"
-                  label="Delete"
-                  class="flex-1 md:flex-none w-full md:w-auto p-button-danger p-button-sm flex justify-center items-center gap-2"
-                  (click)="removeItem(ri)"
-                ></button>
-              </ng-template>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
 
-      <!-- Empty message -->
-      <ng-template #emptymessage>
-        <tr>
-          <td colspan="8" class="text-center p-6">
-            <!-- <div class="flex flex-col items-center gap-3">
-              <i class="pi pi-spin pi-spinner-dotted" style="font-size: 2rem"></i>
-              <span class="text-xl font-medium mb-6 text-gray-700 p-2">Loading companies...</span>
-            </div> -->
-            <div class="flex flex-col items-center gap-2 my-4 text-gray-500">
-              <i class="pi pi-objects-column" style="font-size: 2rem"></i>
-              <span class="text-xl font-medium">No Items found</span>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </p-card>
+          <!-- Empty message -->
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="8" class="text-center p-6">
+                <!-- <div class="flex flex-col items-center gap-3">
+                <i class="pi pi-spin pi-spinner-dotted" style="font-size: 2rem"></i>
+                <span class="text-xl font-medium mb-6 text-gray-700 p-2">Loading companies...</span>
+              </div> -->
+              <div class="flex flex-col items-center gap-2 my-4 text-gray-500">
+                <i class="pi pi-objects-column" style="font-size: 2rem"></i>
+                <span class="text-xl font-medium">No Items found</span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
 
-  <!-- 5. Summary -->
-  <p-card header="Summary" class="rounded-2xl shadow-lg">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="p-3 border rounded-lg bg-gray-50">
-        <p class="font-semibold">Subtotal</p>
-        <p>{{ invoiceAmount.subtotal | currency: 'INR' }}</p>
+    <!-- 5. Summary -->
+    <p-card header="Summary" class="rounded-2xl shadow-lg">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="p-3 border rounded-lg bg-gray-50">
+          <p class="font-semibold">Subtotal</p>
+          <p>{{ invoiceAmount.subtotal | currency: 'INR' }}</p>
+        </div>
+
+        <div class="p-3 border rounded-lg bg-gray-50">
+          <p class="font-semibold">CGST ({{ invoice.cgstRate || 0 }}%)</p>
+          <p>{{ invoiceAmount.cgstAmount | currency: 'INR' }}</p>
+        </div>
+
+        <div class="p-3 border rounded-lg bg-gray-50">
+          <p class="font-semibold">SGST ({{ invoice.sgstRate || 0 }}%)</p>
+          <p>{{ invoiceAmount.sgstAmount | currency: 'INR' }}</p>
+        </div>
+
+        <div class="p-3 border rounded-lg bg-gray-50">
+          <p class="font-semibold">Grand Total</p>
+          <p class="text-lg font-bold">{{ invoiceAmount.grandTotal | currency: 'INR' }}</p>
+        </div>
       </div>
 
-      <div class="p-3 border rounded-lg bg-gray-50">
-        <p class="font-semibold">CGST ({{ invoice.cgstRate || 0 }}%)</p>
-        <p>{{ invoiceAmount.cgstAmount | currency: 'INR' }}</p>
+      <!-- Amount in Words -->
+      <div class="mt-4 p-3 border rounded-lg bg-gray-50">
+        <p class="font-semibold">Amount in Words</p>
+        <p>{{ invoiceAmount.amountInWords || '-' }}</p>
       </div>
+    </p-card>
 
-      <div class="p-3 border rounded-lg bg-gray-50">
-        <p class="font-semibold">SGST ({{ invoice.sgstRate || 0 }}%)</p>
-        <p>{{ invoiceAmount.sgstAmount | currency: 'INR' }}</p>
-      </div>
+    <div class="flex gap-5 justify-end mt-4">
+      @if (invoiceId) {
+        <button
+          pButton
+          label="Download PDF"
+          icon="pi pi-download"
+          class="fill-indigo-800"
+          (click)="downloadPDFInvoice()"
+        ></button>
+      }
 
-      <div class="p-3 border rounded-lg bg-gray-50">
-        <p class="font-semibold">Grand Total</p>
-        <p class="text-lg font-bold">{{ invoiceAmount.grandTotal | currency: 'INR' }}</p>
-      </div>
+      <button
+        pButton
+        label="Save Invoice"
+        icon="pi pi-check"
+        class="p-button-success"
+        (click)="saveInvoice()"
+      ></button>
     </div>
-
-    <!-- Amount in Words -->
-    <div class="mt-4 p-3 border rounded-lg bg-gray-50">
-      <p class="font-semibold">Amount in Words</p>
-      <p>{{ invoiceAmount.amountInWords || '-' }}</p>
-    </div>
-  </p-card>
-
-  <div class="flex gap-5 justify-end mt-4">
-    <button
-      *ngIf="invoiceId"
-      pButton
-      label="Download PDF"
-      icon="pi pi-download"
-      class="fill-indigo-800"
-      (click)="downloadPDFInvoice()"
-    ></button>
-
-    <button
-      pButton
-      label="Save Invoice"
-      icon="pi pi-check"
-      class="p-button-success"
-      (click)="saveInvoice()"
-    ></button>
   </div>
-</div>
 
-<p-dialog
-  header="Invoice Preview"
-  [(visible)]="displayHtml"
-  [modal]="true"
-  styleClass="w-[70vw] h-[80vh] md:w-[70vw] md:h-[80vh] w-[90vw] h-[90vh]"
-  [dismissableMask]="true"
->
-  <div class="invoice-content" [innerHTML]="invoiceHtml"></div>
-</p-dialog>
+  <p-dialog
+    header="Invoice Preview"
+    [(visible)]="displayHtml"
+    [modal]="true"
+    styleClass="w-[70vw] h-[80vh] md:w-[70vw] md:h-[80vh] w-[90vw] h-[90vh]"
+    [dismissableMask]="true"
+    >
+    <div class="invoice-content" [innerHTML]="invoiceHtml"></div>
+  </p-dialog>
 
-<p-dialog
-  header="Invoice PDF Preview"
-  [(visible)]="displayPdf"
-  [modal]="true"
-  styleClass="w-[70vw] h-[80vh] md:w-[70vw] md:h-[80vh] w-[90vw] h-[90vh]"
-  [dismissableMask]="true"
-  [contentStyle]="{ padding: '0', height: '100%' }"
->
-  <iframe *ngIf="pdfSrc" [src]="pdfSrc" width="100%" height="100%" style="border: none"></iframe>
-</p-dialog>
+  <p-dialog
+    header="Invoice PDF Preview"
+    [(visible)]="displayPdf"
+    [modal]="true"
+    styleClass="w-[70vw] h-[80vh] md:w-[70vw] md:h-[80vh] w-[90vw] h-[90vh]"
+    [dismissableMask]="true"
+    [contentStyle]="{ padding: '0', height: '100%' }"
+    >
+    @if (pdfSrc) {
+      <iframe [src]="pdfSrc" width="100%" height="100%" style="border: none"></iframe>
+    }
+  </p-dialog>

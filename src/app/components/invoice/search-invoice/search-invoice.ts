@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { generateInvoiceFilePDFName } from '../../../helper/generateInvoiceFilePDFName';
 import { SharedModule } from '../../../modules/shared.module';
 import { InvoiceService } from '../../../services/invoice.service';
+import { TagClasses, TagModule } from 'primeng/tag';
 
 @Component({
   selector: 'app-search-invoice',
-  imports: [SharedModule, CommonModule],
+  imports: [SharedModule, CommonModule, TagModule],
   templateUrl: './search-invoice.html',
   styleUrls: ['./search-invoice.scss'],
 })
@@ -50,12 +51,12 @@ export class SearchInvoice implements OnInit {
     );
   }
 
-  getSeverity(status: string): string {
+  getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined | null{
     switch (status) {
       case 'Paid':
         return 'success';
       case 'Draft':
-        return 'warning';
+        return 'warn';
       case 'Cancelled':
         return 'danger';
       case 'Finalized':
