@@ -45,3 +45,5 @@ Thumbs.db
 .vscode/tasks.json
 .vercel/project.json
 .vercel/README.txt
+.vercel
+.env*.local

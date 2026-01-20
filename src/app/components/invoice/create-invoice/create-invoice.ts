@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin, tap } from 'rxjs';
+import { catchError, forkJoin, of, tap } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { decrypt } from '../../../helper/encryptionHelper';
 import { generateInvoiceFilePDFName } from '../../../helper/generateInvoiceFilePDFName';
@@ -49,30 +49,45 @@ export class CreateInvoice implements OnInit {
   }
 
   loadLookupsData() {
-    forkJoin({
-      companies: this.companyService.getCompanies(),
-      clients: this.clientService.getClients(),
-      particulars: this.invoiceService.getParticulars(),
-      vehicles: this.invoiceService.getVehicles(),
+  forkJoin({
+    companies: this.companyService.getCompanies().pipe(
+      catchError(err => {
+        console.error('Companies API failed', err);
+        return of([]);
+      })
+    ),
+
+    clients: this.clientService.getClients().pipe(
+      catchError(err => {
+        console.error('Clients API failed', err);
+        return of([]);
+      })
+    ),
+
+    particulars: this.invoiceService.getParticulars().pipe(
+      catchError(err => {
+        console.error('Particulars API failed', err);
+        return of(['Item A', 'Item B', 'Item C', 'New']);
+      })
+    ),
+
+    vehicles: this.invoiceService.getVehicles().pipe(
+      catchError(err => {
+        console.error('Vehicles API failed', err);
+        return of(['MH12AB1234', 'MH14CD5678', 'MH20EF9012']);
+      })
+    ),
+  })
+  .pipe(
+    tap(({ companies, clients, particulars, vehicles }) => {
+      this.companies = companies;
+      this.clients = clients;
+      this.particularsList = particulars;
+      this.vehiclesList = vehicles;
     })
-      .pipe(
-        tap(({ companies, clients, particulars, vehicles }) => {
-          this.companies = [...companies];
-          this.clients = clients;
-          this.particularsList = particulars;
-          this.vehiclesList = vehicles;
-          this.cd.detectChanges();
-        })
-      )
-      .subscribe({
-        error: (error) => {
-          console.error('Error loading lookups:', error);
-          // Fallback to default values if API fails
-          this.particularsList = ['Item A', 'Item B', 'Item C', 'New'];
-          this.vehiclesList = ['MH12AB1234', 'MH14CD5678', 'MH20EF9012'];
-        },
-      });
-  }
+  )
+  .subscribe();
+}
 
   loadInvoice() {
     this.invoiceService.getById(this.invoiceId!)
