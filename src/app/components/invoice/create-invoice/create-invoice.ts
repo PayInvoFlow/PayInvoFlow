@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { catchError, forkJoin, of, tap } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { decrypt } from '../../../helper/encryptionHelper';
 import { generateInvoiceFilePDFName } from '../../../helper/generateInvoiceFilePDFName';
@@ -36,8 +37,7 @@ export class CreateInvoice implements OnInit {
   invoiceHtml: SafeHtml = '';
 
   ngOnInit(): void {
-    this.getCompanies();
-    this.getClients();
+    this.loadLookupsData();
 
     // ✅ check if editing
     this.route.paramMap.subscribe((params) => {
@@ -48,29 +48,71 @@ export class CreateInvoice implements OnInit {
     });
   }
 
+  loadLookupsData() {
+  forkJoin({
+    companies: this.companyService.getCompanies().pipe(
+      catchError(err => {
+        console.error('Companies API failed', err);
+        return of([]);
+      })
+    ),
+
+    clients: this.clientService.getClients().pipe(
+      catchError(err => {
+        console.error('Clients API failed', err);
+        return of([]);
+      })
+    ),
+
+    particulars: this.invoiceService.getParticulars().pipe(
+      catchError(err => {
+        console.error('Particulars API failed', err);
+        return of(['Item A', 'Item B', 'Item C', 'New']);
+      })
+    ),
+
+    vehicles: this.invoiceService.getVehicles().pipe(
+      catchError(err => {
+        console.error('Vehicles API failed', err);
+        return of(['MH12AB1234', 'MH14CD5678', 'MH20EF9012']);
+      })
+    ),
+  })
+  .pipe(
+    tap(({ companies, clients, particulars, vehicles }) => {
+      this.companies = companies;
+      this.clients = clients;
+      this.particularsList = particulars;
+      this.vehiclesList = vehicles;
+    })
+  )
+  .subscribe();
+}
+
   loadInvoice() {
-    this.invoiceService.getById(this.invoiceId!).subscribe({
-      next: (invoice) => {
-        console.log(invoice);
-
-        this.selectedCompany = invoice.company;
-        this.selectedClient = invoice.client;
-        this.invoice = invoice;
-        this.invoice.invoiceDate = new Date(invoice.invoiceDate);
-        this.invoiceItems = invoice.items;
-        this.invoiceItems.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-        this.invoiceSuffix = invoice.invoiceNumber?.replace(
-          this.selectedCompany?.invoicePrefix ?? 'Invoice -',
-          '',
-        );
-        this.recalculate();
-        Promise.resolve().then(() => this.cd.detectChanges());
-      },
-      error: (err) => {
-        console.error('Error loading invoice:', err);
-      },
-    });
+    this.invoiceService.getById(this.invoiceId!)
+      .pipe(
+        tap((invoice) => {
+          console.log(invoice);
+          this.selectedCompany = invoice.company;
+          this.selectedClient = invoice.client;
+          this.invoice = invoice;
+          this.invoice.invoiceDate = new Date(invoice.invoiceDate);
+          this.invoiceItems = invoice.items;
+          this.invoiceItems.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          this.invoiceSuffix = invoice.invoiceNumber?.replace(
+            this.selectedCompany?.invoicePrefix ?? 'Invoice -',
+            '',
+          );
+          this.recalculate();
+          Promise.resolve().then(() => this.cd.detectChanges());
+        })
+      )
+      .subscribe({
+        error: (err) => {
+          console.error('Error loading invoice:', err);
+        },
+      });
   }
 
   invoice: any = {
@@ -103,8 +145,8 @@ export class CreateInvoice implements OnInit {
   editingIndex: number | null = null;
   submitted = false;
 
-  particularsList: string[] = ['Item A', 'Item B', 'Item C', 'New'];
-  vehiclesList: string[] = ['MH12AB1234', 'MH14CD5678', 'MH20EF9012'];
+  particularsList: string[] = [];
+  vehiclesList: string[] = [];
   filteredParticulars: string[] = [];
   filteredVehicles: string[] = [];
 
@@ -131,30 +173,6 @@ export class CreateInvoice implements OnInit {
     if (value && !this.particularsList.includes(value)) {
       this.particularsList.push(value);
     }
-  }
-
-  getCompanies() {
-    this.companyService.getCompanies().subscribe({
-      next: (data) => {
-        this.companies = [...data];
-        this.cd.detectChanges();
-      },
-      error: (error) => {
-        console.error(error);
-      },
-    });
-  }
-
-  getClients() {
-    this.clientService.getClients().subscribe({
-      next: (data) => {
-        this.clients = data;
-        this.cd.detectChanges();
-      },
-      error: (error) => {
-        console.error(error);
-      },
-    });
   }
 
   get fullInvoiceNumber(): string {
@@ -261,45 +279,51 @@ export class CreateInvoice implements OnInit {
   }
 
   createInvoice(model: any) {
-    this.invoiceService.create(model).subscribe({
-      next: (data) => {
-        console.log(data);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Invoice created successfully',
-        });
-      },
-      error: (error) => {
-        console.error(error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error creating invoice',
-        });
-      },
-    });
+    this.invoiceService.create(model)
+      .pipe(
+        tap((data) => {
+          console.log(data);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Invoice created successfully',
+          });
+        })
+      )
+      .subscribe({
+        error: (error) => {
+          console.error(error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error creating invoice',
+          });
+        },
+      });
   }
 
   updateInvoice(model: any) {
-    this.invoiceService.update(this.invoiceId!, model).subscribe({
-      next: (data) => {
-        console.log(data);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Invoice updated successfully',
-        });
-      },
-      error: (error) => {
-        console.error(error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error updating invoice',
-        });
-      },
-    });
+    this.invoiceService.update(this.invoiceId!, model)
+      .pipe(
+        tap((data) => {
+          console.log(data);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Invoice updated successfully',
+          });
+        })
+      )
+      .subscribe({
+        error: (error) => {
+          console.error(error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error updating invoice',
+          });
+        },
+      });
   }
 
   saveInvoice() {
@@ -383,16 +407,19 @@ export class CreateInvoice implements OnInit {
       items: this.invoiceItems,
     };
 
-    this.invoiceService.previewInvoice(previewData).subscribe({
-      next: (data) => {
-        const invoiceHtml = decrypt(data?.html);
-        this.invoiceHtml = this.sanitizer.bypassSecurityTrustHtml(invoiceHtml);
-        this.cd.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error generating preview:', error);
-      },
-    });
+    this.invoiceService.previewInvoice(previewData)
+      .pipe(
+        tap((data) => {
+          const invoiceHtml = decrypt(data?.html);
+          this.invoiceHtml = this.sanitizer.bypassSecurityTrustHtml(invoiceHtml);
+          this.cd.detectChanges();
+        })
+      )
+      .subscribe({
+        error: (error) => {
+          console.error('Error generating preview:', error);
+        },
+      });
   }
 
   previewPdf(): void {
@@ -403,21 +430,23 @@ export class CreateInvoice implements OnInit {
     this.pdfSrc = null;
     this.cd.detectChanges();
 
-    this.invoiceService.downloadPDFInvoice(`${this.invoiceId}`).subscribe({
-      next: (blob: Blob) => {
-        if (!blob || blob.size === 0) {
-          console.error('Empty PDF response');
-          return;
-        }
-
-        const url = URL.createObjectURL(blob);
-        this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-        this.cd.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error downloading PDF:', error);
-      },
-    });
+    this.invoiceService.downloadPDFInvoice(`${this.invoiceId}`)
+      .pipe(
+        tap((blob: Blob) => {
+          if (!blob || blob.size === 0) {
+            console.error('Empty PDF response');
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+          this.cd.detectChanges();
+        })
+      )
+      .subscribe({
+        error: (error) => {
+          console.error('Error downloading PDF:', error);
+        },
+      });
   }
 
   changeDate(item: any, days: number): void {

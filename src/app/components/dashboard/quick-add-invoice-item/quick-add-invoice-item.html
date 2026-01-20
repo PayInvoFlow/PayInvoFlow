@@ -1,0 +1,155 @@
+<p-card class="rounded-2xl shadow-lg bg-white dark:bg-gray-800 p-5">
+
+  <!-- Header -->
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-plus-circle text-blue-600 text-xl"></i>
+      <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+        Quick Add Item
+      </h3>
+    </div>
+  </ng-template>
+
+  <!-- ================= ROW 1 ================= -->
+  <!-- Mobile: 1 column | Desktop: 2 columns -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    <!-- Invoice -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Select Invoice</label>
+      <p-inputgroup >
+        <p-inputgroup-addon
+          class="!p-0 flex items-center justify-center text-gray-600">
+          <i class="pi pi-file"></i>
+        </p-inputgroup-addon>
+
+        <p-select
+          [options]="invoices$ | async"
+          optionLabel="invoiceNumber"
+          optionValue="id"
+          placeholder="Select Invoice"
+          class="w-full"
+          (onChange)="setInvoice($event.value)">
+        </p-select>
+      </p-inputgroup>
+    </div>
+
+    <!-- Particular -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Particulars</label>
+      <p-inputgroup >
+        <p-inputgroup-addon
+          class="!p-0 flex items-center justify-center text-gray-600">
+          <i class="pi pi-align-left"></i>
+        </p-inputgroup-addon>
+
+        <input
+          pInputText
+          [(ngModel)]="item.particulars"
+          placeholder="Item description"
+          pSize="large" 
+          class="w-full"/>
+      </p-inputgroup>
+    </div>
+
+  </div>
+
+  <!-- ================= ROW 2 ================= -->
+  <!-- Mobile: 1 column | Desktop: 3 columns -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+
+    <!-- Date -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Date</label>
+      <p-inputgroup >
+        <p-inputgroup-addon
+          class="!p-0 flex items-center justify-center text-gray-600">
+          <i class="pi pi-calendar"></i>
+        </p-inputgroup-addon>
+
+        <p-datepicker
+          [(ngModel)]="item.date"
+          dateFormat="dd/mm/yy"
+          appendTo="body"
+          styleClass="w-full"
+          inputStyleClass="px-3 flex items-center text-sm">
+        </p-datepicker>
+      </p-inputgroup>
+    </div>
+
+    <!-- Quantity -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Quantity</label>
+      <p-inputgroup >
+        <p-inputgroup-addon
+          class="!p-0 flex items-center justify-center text-gray-600">
+          <i class="pi pi-sort-numeric-up"></i>
+        </p-inputgroup-addon>
+
+        <p-inputNumber
+          [(ngModel)]="item.quantity"
+          [min]="1"
+          styleClass="w-full"
+          inputStyleClass="h-11 px-3 flex items-center text-sm">
+        </p-inputNumber>
+      </p-inputgroup>
+    </div>
+
+    <!-- Rate -->
+    <div>
+      <label class="block text-sm font-semibold mb-1">Rate</label>
+      <p-inputgroup >
+        <p-inputgroup-addon
+          class="!p-0 flex items-center justify-center text-gray-600">
+          <i class="pi pi-indian-rupee"></i>
+        </p-inputgroup-addon>
+
+        <p-inputNumber
+          [(ngModel)]="item.rate"
+          [min]="0"
+          class="w-full"
+          inputStyleClass="h-11 px-3 flex items-center text-sm">
+        </p-inputNumber>
+      </p-inputgroup>
+    </div>
+
+  </div>
+
+  <!-- ================= Amount + Actions ================= -->
+  <div class="flex justify-between items-center mt-6 flex-wrap gap-3">
+
+    <!-- Amount -->
+    <p-chip
+      icon="pi pi-wallet"
+      [label]="'₹ ' + (getAmount() | number:'1.2-2')"
+      class="bg-blue-100 text-blue-700">
+    </p-chip>
+
+    <!-- Buttons -->
+    <div class="flex gap-2">
+      <p-button
+        icon="pi pi-check"
+        severity="success"
+        rounded
+        [loading]="isLoading"
+        (click)="addItem()">
+      </p-button>
+
+      <p-button
+        icon="pi pi-refresh"
+        severity="secondary"
+        rounded
+        (click)="clearForm()">
+      </p-button>
+
+      <p-button
+        icon="pi pi-arrow-right"
+        severity="info"
+        rounded
+        (click)="navigateToInvoice()">
+      </p-button>
+    </div>
+
+  </div>
+
+</p-card>

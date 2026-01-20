@@ -1,57 +1,78 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { generateInvoiceFilePDFName } from '../../../helper/generateInvoiceFilePDFName';
+import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  shareReplay,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import { SharedModule } from '../../../modules/shared.module';
 import { InvoiceService } from '../../../services/invoice.service';
-import { TagClasses, TagModule } from 'primeng/tag';
+import { TagModule } from 'primeng/tag';
 
 @Component({
   selector: 'app-search-invoice',
+  standalone: true,
   imports: [SharedModule, CommonModule, TagModule],
   templateUrl: './search-invoice.html',
   styleUrls: ['./search-invoice.scss'],
 })
-export class SearchInvoice implements OnInit {
-  invoices: any[] = [];
-  filteredInvoices: any[] = [];
-  searchText: string = '';
-  loading: boolean = false;
+export class SearchInvoice {
+  private router = inject(Router);
+  private invoiceService = inject(InvoiceService);
 
-  private router: Router = inject(Router);
-  private invoiceService: InvoiceService = inject(InvoiceService);
+  // streams
+  private filter$ = new BehaviorSubject<any>(null);
+  private searchText$ = new BehaviorSubject<string>('');
 
-  ngOnInit(): void {
-    this.loadInvoices();
-  }
+  loading = false;
 
+  // Load invoices from API
+  invoices$: Observable<any[]> = this.filter$.pipe(
+    tap(() => (this.loading = true)),
+    switchMap((filters) => this.invoiceService.searchInvoices(filters)),
+    tap(() => (this.loading = false)),
+    shareReplay(1),
+  );
+
+  // Filter invoices reactively
+  filteredInvoices$: Observable<any[]> = combineLatest([
+    this.invoices$,
+    this.searchText$.pipe(debounceTime(300), distinctUntilChanged(), startWith('')),
+  ]).pipe(
+    map(([invoices, search]) => {
+      if (!search) return invoices;
+
+      const s = search.toLowerCase();
+      return invoices.filter(
+        (inv) =>
+          inv.invoiceNumber?.toLowerCase().includes(s) ||
+          inv.companyName?.toLowerCase().includes(s) ||
+          inv.clientName?.toLowerCase().includes(s) ||
+          inv.status?.toLowerCase().includes(s),
+      );
+    }),
+    shareReplay(1),
+  );
+
+  // Trigger reload with filters
   loadInvoices(filters?: any) {
-    this.loading = true;
-    this.invoiceService.searchInvoices(filters).subscribe({
-      next: (res: any) => {
-        this.invoices = res;
-        this.filteredInvoices = [...res];
-        this.loading = false;
-      },
-      error: (err: any) => {
-        console.error('Error fetching invoices', err);
-        this.loading = false;
-      },
-    });
+    this.filter$.next(filters);
   }
 
-  filterInvoices() {
-    const search = this.searchText.toLowerCase();
-    this.filteredInvoices = this.invoices.filter(
-      (inv) =>
-        inv.invoiceNumber?.toLowerCase().includes(search) ||
-        inv.companyName?.toLowerCase().includes(search) ||
-        inv.clientName?.toLowerCase().includes(search) ||
-        inv.status?.toLowerCase().includes(search),
-    );
+  // Trigger search
+  filterInvoices(text: string) {
+    this.searchText$.next(text);
   }
 
-  getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined | null{
+  getSeverity(
+    status: string,
+  ): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined | null {
     switch (status) {
       case 'Paid':
         return 'success';
@@ -81,17 +102,14 @@ export class SearchInvoice implements OnInit {
           console.error('Empty PDF response');
           return;
         }
-
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = generateInvoiceFilePDFName(inv.companyName, inv.clientName, inv.invoiceDate);
+        a.download = inv.invoiceNumber + '.pdf';
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (error) => {
-        console.error('Error downloading PDF:', error);
-      },
+      error: (err) => console.error('Error downloading PDF:', err),
     });
   }
 }

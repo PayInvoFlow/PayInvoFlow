@@ -2,7 +2,7 @@
 
 <p-table
   #dt
-  [value]="invoices"
+  [value]="(invoices$ | async) ?? []"
   dataKey="id"
   [rows]="10"
   [paginator]="true"

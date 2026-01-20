@@ -8,6 +8,14 @@ export class InvoiceService {
 
   constructor(private http: HttpOperationsService) {}
 
+  getParticulars(): Observable<any> {
+    return this.http.getAPI(`${this.baseUrl}/particulars`);
+  }
+
+  getVehicles(): Observable<any> {
+    return this.http.getAPI(`${this.baseUrl}/vehicles`);
+  }
+
   /** GET all invoices */
   getAll(): Observable<any> {
     return this.http.getAPI(`${this.baseUrl}`);
@@ -44,4 +52,9 @@ export class InvoiceService {
   searchInvoices(filters?: any): Observable<any[]> {
     return this.http.postAPI(`${this.baseUrl}/search`, filters || {});
   }
+
+  addInvoiceItem(invoiceId: string, item: any): Observable<any[]> {
+    return this.http.postAPI(`${this.baseUrl}/${invoiceId}/items`, item || {});
+  }
+
 }
