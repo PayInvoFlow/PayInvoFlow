@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
+import { QuickAddInvoiceItem } from './quick-add-invoice-item/quick-add-invoice-item';
 
 // Define interfaces based on Mongoose models
 interface IClient {
@@ -46,7 +47,7 @@ interface ITopClient {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ChartModule, CardModule, TableModule, CommonModule],
+  imports: [ChartModule, CardModule, TableModule, CommonModule, QuickAddInvoiceItem],
   templateUrl: './dashboard.html',
   styles: [
     `

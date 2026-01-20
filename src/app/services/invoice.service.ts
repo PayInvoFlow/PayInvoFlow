@@ -52,4 +52,9 @@ export class InvoiceService {
   searchInvoices(filters?: any): Observable<any[]> {
     return this.http.postAPI(`${this.baseUrl}/search`, filters || {});
   }
+
+  addInvoiceItem(invoiceId: string, item: any): Observable<any[]> {
+    return this.http.postAPI(`${this.baseUrl}/${invoiceId}/items`, item || {});
+  }
+
 }
