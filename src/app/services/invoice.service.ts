@@ -8,6 +8,14 @@ export class InvoiceService {
 
   constructor(private http: HttpOperationsService) {}
 
+  getParticulars(): Observable<any> {
+    return this.http.getAPI(`${this.baseUrl}/particulars`);
+  }
+
+  getVehicles(): Observable<any> {
+    return this.http.getAPI(`${this.baseUrl}/vehicles`);
+  }
+
   /** GET all invoices */
   getAll(): Observable<any> {
     return this.http.getAPI(`${this.baseUrl}`);
