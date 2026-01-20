@@ -5,6 +5,7 @@ import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
 import { QuickAddInvoiceItem } from './quick-add-invoice-item/quick-add-invoice-item';
 import { injectSpeedInsights } from '@vercel/speed-insights';
+import { inject } from "@vercel/analytics"
 
 
 // Define interfaces based on Mongoose models
@@ -237,6 +238,7 @@ export class Dashboard implements OnInit {
   topClients: ITopClient[] = [];
 
   ngOnInit() {
+    inject();
     injectSpeedInsights();
     this.initializeData();
     this.initializeCharts();
