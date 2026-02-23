@@ -14,45 +14,33 @@ export class Header {
   ngOnInit() {
     this.items = [
       {
-        label: 'Home',
+        label: 'Dashboard',
         icon: 'pi pi-home',
-        routerLink: '/',
+        routerLink: '/dashboard',
       },
       {
-        label: 'Comapny',
+        label: 'Company',
         icon: 'pi pi-briefcase',
         items: [
-          { label: 'Search', icon: 'pi pi-search', routerLink: '/company/search' },
-          { label: 'Create', icon: 'pi pi-plus', routerLink: '/company/form' },
+          { label: 'Search Company', icon: 'pi pi-search', routerLink: '/company/search' },
+          { label: 'Create Company', icon: 'pi pi-plus', routerLink: '/company/form' },
         ],
       },
-
       {
         label: 'Client',
         icon: 'pi pi-users',
         items: [
-          { label: 'Search', icon: 'pi pi-search', routerLink: '/client/search' },
-          { label: 'Create', icon: 'pi pi-plus', routerLink: '/client/form' },
+          { label: 'Search Clients', icon: 'pi pi-search', routerLink: '/client/search' },
+          { label: 'Create Client', icon: 'pi pi-plus', routerLink: '/client/form' },
         ],
       },
-
       {
         label: 'Invoice',
-        icon: 'pi pi-envelope',
+        icon: 'pi pi-file-edit',
         items: [
-          { label: 'Search', icon: 'pi pi-search', routerLink: '/invoice/search' },
-          { label: 'Create', icon: 'pi pi-plus', routerLink: '/invoice/form' },
+          { label: 'Search Invoices', icon: 'pi pi-search', routerLink: '/invoice/search' },
+          { label: 'Create Invoice', icon: 'pi pi-plus', routerLink: '/invoice/form' },
         ],
-      },
-      {
-        label: 'Contact',
-        icon: 'pi pi-envelope',
-        routerLink: '/contact',
-      },
-      {
-        label: 'About',
-        icon: 'pi pi-info-circle',
-        routerLink: '/about',
       },
     ];
   }

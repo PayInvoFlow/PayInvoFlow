@@ -35,6 +35,7 @@ export class CreateInvoice implements OnInit {
   displayPdf: boolean = false;
   pdfSrc: SafeResourceUrl | null = null;
   invoiceHtml: SafeHtml = '';
+  selectedItem: any = null;
 
   ngOnInit(): void {
     this.loadLookupsData();

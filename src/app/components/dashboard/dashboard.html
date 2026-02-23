@@ -1,153 +1,351 @@
-<div class="w-full bg-gray-50 dark:bg-gray-900 min-h-screen">
-  <!-- Quick Add Invoice Item Widget -->
-  <div class="mb-8">
-    <app-quick-add-invoice-item></app-quick-add-invoice-item>
-  </div>
-
-  <!-- Summary Cards -->
-  <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-    <p-card
-      class="shadow-xl bg-white dark:bg-gray-800 rounded-xl p-1 transition-transform hover:scale-105"
-    >
-      <div class="flex items-center p-1">
-        <i class="pi pi-users text-4xl text-blue-600 dark:text-blue-400 mr-4"></i>
+<div class="dashboard-page w-full min-h-screen pb-8 sm:pb-12 bg-gradient-to-br from-gray-50 via-white to-indigo-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950/20">
+  <div class="max-w-[1600px] mx-auto px-3 sm:px-5 md:px-6 lg:px-8 pt-2 sm:pt-4">
+    <!-- Welcome & Quick Actions - Responsive -->
+    <header class="mb-6 sm:mb-8">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Total Clients</h3>
-          <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">
-            {{ summary.totalClients }}
+          <h1 class="greeting-title text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+            {{ getGreeting() }}, welcome back
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 text-xs sm:text-sm md:text-base">
+            {{ today | date: 'EEEE, MMMM d, y' }}
           </p>
         </div>
-      </div>
-    </p-card>
-    <p-card
-      class="shadow-xl bg-white dark:bg-gray-800 rounded-xl transition-transform hover:scale-105"
-    >
-      <div class="flex items-center p-4">
-        <i class="pi pi-file text-4xl text-green-600 dark:text-green-400 mr-4"></i>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Total Invoices</h3>
-          <p class="text-3xl font-bold text-green-600 dark:text-green-400">
-            {{ summary.totalInvoices }}
-          </p>
+        <div class="flex flex-wrap gap-2 sm:gap-3">
+          <a pButton pRipple routerLink="/invoice/form" icon="pi pi-plus" label="New Invoice"
+             class="p-button-primary shadow-md !text-xs sm:!text-sm !px-3 sm:!px-4"></a>
+          <a pButton pRipple routerLink="/client/form" icon="pi pi-user-plus" label="Add Client"
+             class="p-button-outlined p-button-secondary !text-xs sm:!text-sm !px-3 sm:!px-4"></a>
+          <a pButton pRipple routerLink="/invoice/search" icon="pi pi-list" label="Invoices"
+             class="p-button-outlined !text-xs sm:!text-sm !px-3 sm:!px-4"></a>
         </div>
       </div>
-    </p-card>
-    <p-card
-      class="shadow-xl bg-white dark:bg-gray-800 rounded-xl transition-transform hover:scale-105"
-    >
-      <div class="flex items-center p-4">
-        <i class="pi pi-dollar text-4xl text-yellow-600 dark:text-yellow-400 mr-4"></i>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Total Revenue</h3>
-          <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-            ₹{{ summary.totalRevenue | number }}
-          </p>
-        </div>
+    </header>
+
+    <!-- Quick Add Invoice Item -->
+    <section class="mb-6 sm:mb-8" aria-label="Quick add item">
+      <app-quick-add-invoice-item></app-quick-add-invoice-item>
+    </section>
+
+    <!-- KPI Summary Cards - Responsive grid -->
+    <section class="mb-6 sm:mb-8" aria-label="Overview">
+      <h2 class="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 sm:mb-4">Overview</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
+        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-blue-500">
+          <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+              <i class="pi pi-users text-lg sm:text-2xl text-blue-600 dark:text-blue-400"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Clients</p>
+              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.totalClients }}</p>
+            </div>
+          </div>
+        </p-card>
+        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-emerald-500">
+          <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+              <i class="pi pi-file text-lg sm:text-2xl text-emerald-600 dark:text-emerald-400"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Invoices</p>
+              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.totalInvoices }}</p>
+            </div>
+          </div>
+        </p-card>
+        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-amber-500 col-span-2 lg:col-span-1">
+          <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+              <i class="pi pi-wallet text-lg sm:text-2xl text-amber-600 dark:text-amber-400"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Revenue</p>
+              <p class="text-base sm:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate" pTooltip="Total revenue from all invoices">₹{{ summary.totalRevenue | number }}</p>
+            </div>
+          </div>
+        </p-card>
+        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-violet-500">
+          <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+              <i class="pi pi-check-circle text-lg sm:text-2xl text-violet-600 dark:text-violet-400"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Paid</p>
+              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.paidInvoices }}</p>
+            </div>
+          </div>
+        </p-card>
+        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-red-500">
+          <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+              <i class="pi pi-exclamation-triangle text-lg sm:text-2xl text-red-600 dark:text-red-400"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Overdue</p>
+              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.overdueInvoices }}</p>
+              <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">₹{{ summary.overdueAmount | number }}</p>
+            </div>
+          </div>
+        </p-card>
       </div>
-    </p-card>
-    <p-card
-      class="shadow-xl bg-white dark:bg-gray-800 rounded-xl transition-transform hover:scale-105"
-    >
-      <div class="flex items-center p-4">
-        <i class="pi pi-check-circle text-4xl text-purple-600 dark:text-purple-400 mr-4"></i>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Paid Invoices</h3>
-          <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
-            {{ summary.paidInvoices }}
-          </p>
+    </section>
+
+    <!-- This Month + Due Soon + Activity - 3 col on large -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-4 border-t-4 border-t-indigo-500">
+        <h3 class="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <i class="pi pi-calendar text-indigo-500"></i>
+          This Month
+        </h3>
+        <div class="space-y-2">
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Invoices</p>
+          <p class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ thisMonth.invoiceCount }}</p>
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2">Revenue</p>
+          <p class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">₹{{ thisMonth.revenue | number }}</p>
         </div>
-      </div>
-    </p-card>
+      </p-card>
+      <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-4 border-t-4 border-t-amber-500">
+        <h3 class="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <i class="pi pi-clock text-amber-500"></i>
+          Due in 7 days
+        </h3>
+        @if (invoicesDueSoon.length === 0) {
+          <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">No invoices due soon.</p>
+        } @else {
+          <div class="overflow-x-auto -mx-2 dashboard-table-wrapper">
+            <p-table [value]="invoicesDueSoon" [tableStyle]="{ 'min-width': '18rem' }" styleClass="dashboard-table p-datatable-sm p-datatable-striped">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th class="!text-xs sm:!text-sm">Invoice</th>
+                  <th class="!text-xs sm:!text-sm">Client</th>
+                  <th class="!text-xs sm:!text-sm">Due</th>
+                  <th class="!text-xs sm:!text-sm">Amount</th>
+                  <th class="!text-xs sm:!text-sm w-12">Action</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-inv>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <td class="!text-xs sm:!text-sm font-medium">{{ inv.invoiceNumber }}</td>
+                  <td class="!text-xs sm:!text-sm">{{ inv.client }}</td>
+                  <td class="!text-xs sm:!text-sm">{{ inv.dueDate | date: 'shortDate' }}</td>
+                  <td class="!text-xs sm:!text-sm">₹{{ invoiceAmountMap[inv.invoiceNumber]?.grandTotal | number }}</td>
+                  <td>
+                    <a pButton pRipple [routerLink]="['/invoice/form', inv.invoiceNumber]" icon="pi pi-external-link" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="Open"></a>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        }
+      </p-card>
+      <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-4 border-t-4 border-t-violet-500">
+        <h3 class="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          <i class="pi pi-bell text-violet-500"></i>
+          Recent Activity
+        </h3>
+        <ul class="space-y-2 max-h-40 sm:max-h-48 overflow-y-auto pr-1">
+          @for (a of activityItems; track a.text) {
+            <li class="flex gap-2 text-xs sm:text-sm">
+              <i [class]="a.icon + ' ' + a.color + ' mt-0.5 flex-shrink-0'" class="pi"></i>
+              <span class="text-gray-700 dark:text-gray-300 flex-1">{{ a.text }}</span>
+              <span class="text-gray-400 dark:text-gray-500 flex-shrink-0">{{ a.time }}</span>
+            </li>
+          }
+        </ul>
+      </p-card>
+    </section>
 
-    <p-card
-      class="shadow-xl bg-white dark:bg-gray-800 rounded-xl transition-transform hover:scale-105"
-    >
-      <div class="flex items-center p-4">
-        <i class="pi pi-check-circle text-4xl text-purple-600 dark:text-purple-400 mr-4"></i>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Overdue Invoices</h3>
-          <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
-            {{ summary.overdueInvoices }}
-            <span class="text-lg text-gray-600 dark:text-gray-300">
-              Total: ₹{{ summary.overdueAmount | number }}
-            </span>
+    <!-- Charts - Responsive -->
+    <section class="mb-6 sm:mb-8">
+      <h2 class="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 sm:mb-4">Charts</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 overflow-hidden">
+          <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-gray-100">Invoice Status</h3>
+          <div class="h-56 sm:h-64 flex flex-col min-h-0">
+            <div class="chart-wrapper flex-1 min-h-0">
+              <p-chart type="doughnut" [data]="invoiceStatusChartData" [options]="doughnutChartOptions"></p-chart>
+            </div>
+          </div>
+        </p-card>
+        <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 lg:col-span-2 overflow-hidden">
+          <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-gray-100">Monthly Revenue</h3>
+          <div class="h-48 sm:h-56 flex flex-col min-h-0">
+            <div class="chart-wrapper flex-1 min-h-0">
+              <p-chart type="line" [data]="monthlyRevenueChartData" [options]="chartOptions"></p-chart>
+            </div>
+          </div>
+        </p-card>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
+        <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 overflow-hidden">
+          <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-gray-100">Status Trend</h3>
+          <div class="h-48 sm:h-52 flex flex-col min-h-0">
+            <div class="chart-wrapper flex-1 min-h-0">
+              <p-chart type="line" [data]="invoiceStatusTrendChartData" [options]="chartOptions"></p-chart>
+            </div>
+          </div>
+        </p-card>
+        <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 overflow-hidden">
+          <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-gray-100">Clients by State</h3>
+          <div class="h-48 sm:h-52 flex flex-col min-h-0">
+            <div class="chart-wrapper flex-1 min-h-0">
+              <p-chart type="bar" [data]="clientStateChartData" [options]="chartOptions"></p-chart>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </section>
+
+    <!-- Customizable Widget: Invoice Explorer with Filters -->
+    <section class="mb-6 sm:mb-8">
+      <h2 class="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 sm:mb-4">Invoice Explorer</h2>
+      <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-5 border border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col gap-4">
+          <!-- Filters row - responsive grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div class="flex flex-col gap-1.5 min-w-0">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Status</label>
+              <p-multiSelect [(ngModel)]="filterStatus" [options]="statusOptions" optionLabel="label" optionValue="value"
+                             placeholder="All statuses" [showClear]="true" styleClass="w-full explorer-filter" class="w-full"></p-multiSelect>
+            </div>
+            <div class="flex flex-col gap-1.5 min-w-0">
+              <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">Client</label>
+              <p-select [(ngModel)]="filterClient" [options]="clientOptions" optionLabel="label" optionValue="value"
+                        placeholder="All clients" [showClear]="true" styleClass="w-full explorer-filter" class="w-full"></p-select>
+            </div>
+            <!-- Date range: From & To side by side, responsive -->
+            <div class="grid grid-cols-2 gap-3 sm:gap-4 min-w-0">
+              <div class="flex flex-col gap-1.5 min-w-0">
+                <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">From</label>
+                <p-datepicker [(ngModel)]="filterDateFrom" dateFormat="dd/mm/yy" placeholder="From"
+                  styleClass="w-full explorer-date" inputStyleClass="w-full !text-xs sm:!text-sm rounded-lg"
+                  [showIcon]="true" appendTo="body"></p-datepicker>
+              </div>
+              <div class="flex flex-col gap-1.5 min-w-0">
+                <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">To</label>
+                <p-datepicker [(ngModel)]="filterDateTo" dateFormat="dd/mm/yy" placeholder="To"
+                  styleClass="w-full explorer-date" inputStyleClass="w-full !text-xs sm:!text-sm rounded-lg"
+                  [showIcon]="true" appendTo="body"></p-datepicker>
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-end">
+              <div class="flex flex-col gap-1.5 min-w-0 flex-1">
+                <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">View as</label>
+                <p-select [(ngModel)]="customWidgetView" [options]="customViewOptions" optionLabel="label" optionValue="value" styleClass="w-full explorer-filter" class="w-full"></p-select>
+              </div>
+              <button pButton pRipple label="Clear" icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary !text-xs sm:!text-sm flex-shrink-0" (click)="clearCustomFilters()"></button>
+            </div>
+          </div>
+          <!-- Result count -->
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Showing <strong>{{ filteredInvoices.length }}</strong> invoice(s)
           </p>
+          <!-- Content: table or chart -->
+          @if (customWidgetView === 'table') {
+            <div class="overflow-x-auto -mx-1 dashboard-table-wrapper">
+              <p-table [value]="filteredInvoices" [tableStyle]="{ 'min-width': '32rem' }" styleClass="dashboard-table p-datatable-sm p-datatable-striped">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th class="!text-xs sm:!text-sm">Invoice</th>
+                    <th class="!text-xs sm:!text-sm">Client</th>
+                    <th class="!text-xs sm:!text-sm">Date</th>
+                    <th class="!text-xs sm:!text-sm">Amount</th>
+                    <th class="!text-xs sm:!text-sm">Status</th>
+                    <th class="!text-xs sm:!text-sm w-14">Action</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-inv>
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td class="!text-xs sm:!text-sm font-medium">{{ inv.invoiceNumber }}</td>
+                    <td class="!text-xs sm:!text-sm">{{ inv.client }}</td>
+                    <td class="!text-xs sm:!text-sm">{{ inv.invoiceDate | date: 'shortDate' }}</td>
+                    <td class="!text-xs sm:!text-sm">₹{{ (invoiceAmountMap[inv.invoiceNumber]?.grandTotal ?? 0) | number }}</td>
+                    <td><span [class]="getStatusClass(inv.status)" class="!text-xs sm:!text-sm">{{ inv.status }}</span></td>
+                    <td>
+                      <a pButton pRipple [routerLink]="['/invoice/form', inv.invoiceNumber]" icon="pi pi-eye" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="View"></a>
+                    </td>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                  <tr><td colspan="6" class="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">No invoices match the filters.</td></tr>
+                </ng-template>
+              </p-table>
+            </div>
+          } @else {
+            <div class="h-56 sm:h-64 min-h-[200px] overflow-hidden flex flex-col min-h-0">
+              @if (filteredChartData.labels.length > 0) {
+                <div class="chart-wrapper flex-1 min-h-0">
+                  <p-chart [type]="customWidgetView" [data]="filteredChartData" [options]="chartOptions"></p-chart>
+                </div>
+              } @else {
+                <p class="text-gray-500 dark:text-gray-400 text-sm flex items-center justify-center h-full">No data for chart. Adjust filters or choose Table view.</p>
+              }
+            </div>
+          }
         </div>
-      </div>
-    </p-card>
-  </div>
+      </p-card>
+    </section>
 
-  <!-- Monthly Revenue and Invoice Status Trend -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Monthly Revenue Line Chart -->
-    <p-card class="shadow-xl bg-white dark:bg-gray-800 rounded-xl p-4">
-      <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-        Monthly Revenue Trend
-      </h3>
-      <p-chart type="line" [data]="monthlyRevenueChartData" [options]="chartOptions"></p-chart>
-    </p-card>
-
-    <!-- Invoice Status Trend Line Chart -->
-    <p-card class="shadow-xl bg-matrix-50 dark:bg-gray-800 rounded-xl p-4">
-      <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-        Invoice Status Trend
-      </h3>
-      <p-chart type="line" [data]="invoiceStatusTrendChartData" [options]="chartOptions"></p-chart>
-    </p-card>
-  </div>
-
-  <!-- Tables Section -->
-  <div class="grid grid-cols-1 gap-6">
-    <!-- Recent Invoices Table -->
-    <p-card class="shadow-xl bg-white dark:bg-gray-800 rounded-xl p-4">
-      <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Recent Invoices</h3>
-      <p-table [value]="recentInvoices" [tableStyle]="{ 'min-width': '50rem' }">
-        <ng-template pTemplate="header">
-          <tr>
-            <th class="text-gray-800 dark:text-gray-100">Invoice Number</th>
-            <th class="text-gray-800 dark:text-gray-100">Client</th>
-            <th class="text-gray-800 dark:text-gray-100">Date</th>
-            <th class="text-gray-800 dark:text-gray-100">Amount</th>
-            <th class="text-gray-800 dark:text-gray-100">Status</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-invoice>
-          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <td>{{ invoice.invoiceNumber }}</td>
-            <td>{{ invoice.client }}</td>
-            <td>{{ invoice.invoiceDate | date: 'shortDate' }}</td>
-            <td>₹{{ invoiceAmountMap[invoice.invoiceNumber].grandTotal | number }}</td>
-            <td>
-              <span [class]="getStatusClass(invoice.status)">{{ invoice.status }}</span>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </p-card>
-
-    <!-- Top Clients by Invoice Value -->
-    <p-card class="shadow-xl bg-white dark:bg-gray-800 rounded-xl p-4">
-      <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-        Top Clients by Invoice Value
-      </h3>
-      <p-table [value]="topClients" [tableStyle]="{ 'min-width': '50rem' }">
-        <ng-template pTemplate="header">
-          <tr>
-            <th class="text-gray-800 dark:text-gray-100">Client Name</th>
-            <th class="text-gray-800 dark:text-gray-100">Total Invoices</th>
-            <th class="text-gray-800 dark:text-gray-100">Total Amount</th>
-            <th class="text-gray-800 dark:text-gray-100">State</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-client>
-          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <td>{{ client.name }}</td>
-            <td>{{ client.totalInvoices }}</td>
-            <td>₹{{ client.totalAmount | number }}</td>
-            <td>{{ client.state }}</td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </p-card>
+    <!-- Recent Invoices & Top Clients - Responsive tables -->
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+      <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+          <h3 class="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-100">Recent Invoices</h3>
+          <a pButton pRipple routerLink="/invoice/search" label="View all" icon="pi pi-arrow-right" iconPos="right" class="p-button-text p-button-sm !text-xs sm:!text-sm w-fit"></a>
+        </div>
+        <div class="overflow-x-auto -mx-1 dashboard-table-wrapper">
+          <p-table [value]="recentInvoices" [tableStyle]="{ 'min-width': '36rem' }" styleClass="dashboard-table p-datatable-sm p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th class="!text-xs sm:!text-sm">Invoice</th>
+                <th class="!text-xs sm:!text-sm">Client</th>
+                <th class="!text-xs sm:!text-sm">Date</th>
+                <th class="!text-xs sm:!text-sm">Amount</th>
+                <th class="!text-xs sm:!text-sm">Status</th>
+                <th class="!text-xs sm:!text-sm w-14">Action</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-invoice>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <td class="!text-xs sm:!text-sm font-medium">{{ invoice.invoiceNumber }}</td>
+                <td class="!text-xs sm:!text-sm">{{ invoice.client }}</td>
+                <td class="!text-xs sm:!text-sm">{{ invoice.invoiceDate | date: 'shortDate' }}</td>
+                <td class="!text-xs sm:!text-sm">₹{{ (invoiceAmountMap[invoice.invoiceNumber]?.grandTotal ?? 0) | number }}</td>
+                <td><span [class]="getStatusClass(invoice.status)" class="!text-xs sm:!text-sm">{{ invoice.status }}</span></td>
+                <td>
+                  <a pButton pRipple [routerLink]="['/invoice/form', invoice.invoiceNumber]" icon="pi pi-eye" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="View"></a>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </p-card>
+      <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+          <h3 class="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-100">Top Clients</h3>
+          <a pButton pRipple routerLink="/client/search" label="View all" icon="pi pi-arrow-right" iconPos="right" class="p-button-text p-button-sm !text-xs sm:!text-sm w-fit"></a>
+        </div>
+        <div class="overflow-x-auto -mx-1 dashboard-table-wrapper">
+          <p-table [value]="topClients" [tableStyle]="{ 'min-width': '36rem' }" styleClass="dashboard-table p-datatable-sm p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th class="!text-xs sm:!text-sm">Client</th>
+                <th class="!text-xs sm:!text-sm">Invoices</th>
+                <th class="!text-xs sm:!text-sm">Total</th>
+                <th class="!text-xs sm:!text-sm">State</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-client>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <td class="!text-xs sm:!text-sm font-medium">{{ client.name }}</td>
+                <td class="!text-xs sm:!text-sm">{{ client.totalInvoices }}</td>
+                <td class="!text-xs sm:!text-sm font-medium text-emerald-600 dark:text-emerald-400">₹{{ client.totalAmount | number }}</td>
+                <td class="!text-xs sm:!text-sm">{{ client.state }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </p-card>
+    </section>
   </div>
 </div>

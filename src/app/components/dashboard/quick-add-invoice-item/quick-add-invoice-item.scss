@@ -1,14 +1,46 @@
-:host ::ng-deep .p-panel {
-  border-radius: 14px;
-  background: var(--surface-card);
+:host {
+  display: block;
 }
 
-:host ::ng-deep .p-float-label > label {
-  font-size: 0.75rem;
+.quick-add-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
 }
 
-:host ::ng-deep .p-inputtext,
-:host ::ng-deep .p-inputnumber-input {
-  font-size: 0.85rem;
-  height: 2.2rem;
+:host ::ng-deep {
+  .quick-add-select .p-select,
+  .quick-add-input.p-inputtext {
+    border-radius: 0.5rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .quick-add-select .p-select:focus-within,
+  .quick-add-input.p-inputtext:enabled:focus {
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+  }
+
+  .p-inputnumber-input,
+  .p-datepicker-input {
+    border-radius: 0.5rem;
+  }
+
+  .p-card .p-card-body {
+    padding: 0;
+  }
+
+  .p-card .p-card-content {
+    padding: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  :host ::ng-deep {
+    .p-button {
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+    }
+  }
 }

@@ -137,7 +137,7 @@
       ></button>
     </div>
 
-    <p-table [value]="invoiceItems" responsiveLayout="stack" breakpoint="768px" class="w-full">
+    <p-table [value]="invoiceItems" responsiveLayout="stack" breakpoint="768px" class="w-full" selectionMode="single" [(selection)]="selectedItem" [metaKeySelection]="true" dataKey="id">
       <ng-template pTemplate="header">
         <tr>
           <th></th>
@@ -154,7 +154,7 @@
 
       <ng-template pTemplate="body" let-item let-ri="rowIndex">
         <!-- {{ item | json }} -->
-        <tr>
+        <tr [pSelectableRow]="item">
           <!-- Id -->
            <td data-label="Id">
             <span class="block font-semibold mb-1 md:hidden">Id:</span>

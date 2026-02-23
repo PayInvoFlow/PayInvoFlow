@@ -3,11 +3,6 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
 import { InvoiceService } from '../../../services/invoice.service';
 import { BehaviorSubject, catchError, of, shareReplay, combineLatest, map, tap } from 'rxjs';
 import { SharedModule } from '../../../modules/shared.module';
@@ -23,8 +18,9 @@ import { SharedModule } from '../../../modules/shared.module';
   styleUrls: ['./quick-add-invoice-item.scss'],
 })
 export class QuickAddInvoiceItem {
- private invoiceService = inject(InvoiceService);
+  private invoiceService = inject(InvoiceService);
   private router = inject(Router);
+  private messageService = inject(MessageService);
 
   isLoading = false;
 
@@ -87,7 +83,11 @@ export class QuickAddInvoiceItem {
     const invoiceId = this.selectedInvoiceId$.value;
 
     if (!invoiceId) {
-      alert('Please select an Invoice first');
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Select invoice',
+        detail: 'Please select an invoice first.',
+      });
       return;
     }
 
@@ -98,14 +98,27 @@ export class QuickAddInvoiceItem {
       amount: this.getAmount(),
     })
     .pipe(
-      tap(() => (this.isLoading = false)),
+      tap(() => {
+        this.isLoading = false;
+        this.clearForm();
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Item added',
+          detail: 'Line item has been added to the invoice.',
+        });
+      }),
       catchError(err => {
         console.error('Failed to add item', err);
         this.isLoading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Failed',
+          detail: 'Could not add item. Please try again.',
+        });
         return of(null);
       })
     )
-    .subscribe(() => this.clearForm());
+    .subscribe();
   }
 
   navigateToInvoice() {

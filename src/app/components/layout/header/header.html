@@ -1,33 +1,34 @@
-<p-menubar
-  [model]="items"
-  class="fixed text-indigo-700 dark:text-indigo-200 font-semibold text-sm lg:text-base top-0 left-0 right-0 z-50 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg p-4 transition-all duration-300 ease-in-out"
-  [style]="{ 'border-bottom': '1px solid rgba(0, 0, 0, 0.1)' }"
->
-  <!-- Left section (logo) -->
-  <ng-template pTemplate="start">
-    <div class="flex items-center gap-4">
-      <img
-        routerLink="/"
-        src="assets/images/logos/payinvoflow-logo.png"
-        alt="PayInvoFlow Logo"
-        class="h-16 w-auto object-contain transition-transform duration-300 hover:scale-105"
-      />
-    </div>
-  </ng-template>
+<header class="app-header fixed top-0 left-0 right-0 z-50">
+  <div class="header-container">
+    <p-menubar
+      [model]="items"
+      styleClass="app-menubar"
+      [autoDisplay]="false"
+      breakpoint="992">
+      <!-- Logo only -->
+      <ng-template pTemplate="start">
+        <a routerLink="/dashboard" class="header-logo flex items-center shrink-0" aria-label="Home">
+          <img
+            src="assets/images/logos/payinvoflow-logo.png"
+            alt="Logo"
+            class="header-logo-img"
+          />
+        </a>
+      </ng-template>
 
-  <!-- Right section (theme + login) -->
-  <ng-template pTemplate="end">
-    <div class="flex items-center gap-4">
-      <theme-switcher
-        class="rounded-full transition-transform duration-300 hover:scale-110"
-      ></theme-switcher>
-      <button
-        pButton
-        type="button"
-        label="Login"
-        icon="pi pi-user"
-        class="p-button-rounded p-button-sm bg-primary text-white hover:bg-primary-dark shadow-lg transition-all duration-300 ease-in-out"
-      ></button>
-    </div>
-  </ng-template>
-</p-menubar>
+      <!-- Right: theme + login -->
+      <ng-template pTemplate="end">
+        <div class="header-actions flex items-center gap-2 sm:gap-4">
+          <theme-switcher class="shrink-0 rounded-full transition-transform hover:scale-105"></theme-switcher>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-user"
+            label="Login"
+            class="p-button-rounded p-button-outlined p-button-sm !text-xs sm:!text-sm header-login"
+          ></button>
+        </div>
+      </ng-template>
+    </p-menubar>
+  </div>
+</header>
