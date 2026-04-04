@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import {
@@ -11,6 +11,8 @@ import {
   switchMap,
   tap,
 } from 'rxjs/operators';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { Menu } from 'primeng/menu';
 import { SharedModule } from '../../../modules/shared.module';
 import { InvoiceService } from '../../../services/invoice.service';
 import { TagModule } from 'primeng/tag';
@@ -23,14 +25,20 @@ import { TagModule } from 'primeng/tag';
   styleUrls: ['./search-invoice.scss'],
 })
 export class SearchInvoice {
+  @ViewChild('statusMenu') statusMenu?: Menu;
+
   private router = inject(Router);
   private invoiceService = inject(InvoiceService);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
 
   // streams
   private filter$ = new BehaviorSubject<any>(null);
   private searchText$ = new BehaviorSubject<string>('');
 
   loading = false;
+
+  statusMenuItems: MenuItem[] = [];
 
   // Load invoices from API
   invoices$: Observable<any[]> = this.filter$.pipe(
@@ -87,7 +95,91 @@ export class SearchInvoice {
     }
   }
 
+  /** PrimeIcons class shown on the status tag */
+  getStatusIcon(status: string | undefined): string {
+    switch (status) {
+      case 'Paid':
+        return 'pi pi-check-circle';
+      case 'Draft':
+        return 'pi pi-file-edit';
+      case 'Cancelled':
+        return 'pi pi-times-circle';
+      case 'Finalized':
+        return 'pi pi-send';
+      default:
+        return 'pi pi-info-circle';
+    }
+  }
+
+  isDraft(inv: any): boolean {
+    return inv?.status === 'Draft';
+  }
+
+  /** Target statuses allowed from the current status (business rules). */
+  getAllowedStatusTargets(current: string | undefined): string[] {
+    const c = (current ?? '').trim();
+    switch (c) {
+      case 'Draft':
+        return ['Finalized', 'Paid', 'Cancelled'];
+      case 'Finalized':
+        return ['Paid', 'Cancelled'];
+      case 'Paid':
+      case 'Cancelled':
+      default:
+        return [];
+    }
+  }
+
+  canChangeStatus(current: string | undefined): boolean {
+    return this.getAllowedStatusTargets(current).length > 0;
+  }
+
+  openStatusMenu(event: Event, inv: any) {
+    const targets = this.getAllowedStatusTargets(inv.status);
+    this.statusMenuItems = targets.map((newStatus) => ({
+      label: `Change to ${newStatus}`,
+      icon: this.getStatusIcon(newStatus),
+      command: () => this.confirmStatusChange(inv, newStatus),
+    }));
+    this.statusMenu?.toggle(event);
+  }
+
+  confirmStatusChange(inv: any, newStatus: string) {
+    this.confirmationService.confirm({
+      header: 'Change invoice status',
+      message: `You are about to change invoice "${inv.invoiceNumber}" from "${inv.status}" to "${newStatus}". Do you want to continue?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Yes, change status',
+      rejectLabel: 'Cancel',
+      accept: () => this.performStatusChange(inv, newStatus),
+    });
+  }
+
+  private performStatusChange(inv: any, newStatus: string) {
+    this.invoiceService.updateInvoiceStatus(String(inv.id), newStatus).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Status updated',
+          detail: `Invoice "${inv.invoiceNumber}" is now "${newStatus}".`,
+        });
+        this.filter$.next(this.filter$.getValue());
+      },
+      error: (err) => {
+        console.error(err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Could not update status',
+          detail: err?.error?.message || 'Please try again.',
+        });
+      },
+    });
+  }
+
   editInvoice(inv: any) {
+    if (!this.isDraft(inv)) {
+      return;
+    }
     this.router.navigate(['/invoice/form', inv.id]);
   }
 

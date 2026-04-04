@@ -57,4 +57,8 @@ export class InvoiceService {
     return this.http.postAPI(`${this.baseUrl}/${invoiceId}/items`, item || {});
   }
 
+  /** PUT new status for an invoice (body: { status }) */
+  updateInvoiceStatus(id: string, status: string): Observable<any> {
+    return this.http.putAPI(`${this.baseUrl}/${id}/status`, { status });
+  }
 }

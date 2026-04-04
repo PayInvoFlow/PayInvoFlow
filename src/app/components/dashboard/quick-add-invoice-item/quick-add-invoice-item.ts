@@ -6,6 +6,7 @@ import { MessageService } from 'primeng/api';
 import { InvoiceService } from '../../../services/invoice.service';
 import { BehaviorSubject, catchError, of, shareReplay, combineLatest, map, tap } from 'rxjs';
 import { SharedModule } from '../../../modules/shared.module';
+import { InvoiceItemsService } from '../../../services/invoiceItems.service';
 
 @Component({
   selector: 'app-quick-add-invoice-item',
@@ -19,6 +20,7 @@ import { SharedModule } from '../../../modules/shared.module';
 })
 export class QuickAddInvoiceItem {
   private invoiceService = inject(InvoiceService);
+  private invoiceItemsService = inject(InvoiceItemsService);
   private router = inject(Router);
   private messageService = inject(MessageService);
 
@@ -93,7 +95,7 @@ export class QuickAddInvoiceItem {
 
     this.isLoading = true;
 
-    this.invoiceService.addInvoiceItem(invoiceId, {
+    this.invoiceItemsService.create({
       ...this.item,
       amount: this.getAmount(),
     })

@@ -1,4 +1,6 @@
+<p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
+<p-menu #statusMenu [model]="statusMenuItems" [popup]="true" appendTo="body"></p-menu>
 
 <p-table
   #dt
@@ -57,17 +59,44 @@
         <td>{{ inv.clientName }}</td>
         <td class="font-semibold">{{ inv.amount | currency: 'INR' }}</td>
         <td class="text-center">
-          <p-tag [value]="inv.status" [severity]="getSeverity(inv.status)"></p-tag>
+          <div class="inline-flex items-center gap-1 justify-center flex-wrap">
+            <p-tag
+              [icon]="getStatusIcon(inv.status)"
+              [value]="inv.status"
+              [severity]="getSeverity(inv.status)"
+            ></p-tag>
+            @if (canChangeStatus(inv.status)) {
+              <button
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-sync"
+                text
+                rounded
+                class="p-button-sm"
+                (click)="openStatusMenu($event, inv)"
+                pTooltip="Change status"
+                tooltipPosition="top"
+              ></button>
+            }
+          </div>
         </td>
         <td>
-          <button
-            pButton
-            pRipple
-            type="button"
-            icon="pi pi-pencil"
-            text
-            (click)="editInvoice(inv)"
-          ></button>
+          <span
+            pTooltip="Only draft invoices can be edited."
+            [tooltipDisabled]="isDraft(inv)"
+            tooltipPosition="top"
+          >
+            <button
+              pButton
+              pRipple
+              type="button"
+              [icon]="isDraft(inv) ? 'pi pi-pencil' : 'pi pi-pencil p-button-disabled'"
+              text
+              [disabled]="!isDraft(inv)"
+              (click)="editInvoice(inv)"
+            ></button>
+          </span>
           <button
             pButton
             pRipple
@@ -90,25 +119,55 @@
           <div class="text-gray-600">{{ inv.clientName }}</div>
         </td>
         <td>
-          <div class="flex items-center gap-2">
-            <p-tag [value]="inv.status" class="text-xs" [severity]="getSeverity(inv.status)"></p-tag>
-            <button
-              pButton
-              pRipple
-              type="button"
-              icon="pi pi-pencil"
-              text
-              (click)="editInvoice(inv)"
-            ></button>
-            <button
-              pButton
-              pRipple
-              type="button"
-              icon="pi pi-download"
-              text
-              class="p-button-sm p-button-info"
-              (click)="downloadPDFInvoice(inv)"
-            ></button>
+          <div class="flex flex-col items-stretch gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p-tag
+                [icon]="getStatusIcon(inv.status)"
+                [value]="inv.status"
+                class="text-xs"
+                [severity]="getSeverity(inv.status)"
+              ></p-tag>
+              @if (canChangeStatus(inv.status)) {
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  icon="pi pi-sync"
+                  text
+                  rounded
+                  class="p-button-sm"
+                  (click)="openStatusMenu($event, inv)"
+                  pTooltip="Change status"
+                  tooltipPosition="top"
+                ></button>
+              }
+            </div>
+            <div class="flex items-center gap-1">
+              <span
+                pTooltip="Only draft invoices can be edited."
+                [tooltipDisabled]="isDraft(inv)"
+                tooltipPosition="top"
+              >
+                <button
+                  pButton
+                  pRipple
+                  type="button"
+                  icon="pi pi-pencil"
+                  text
+                  [disabled]="!isDraft(inv)"
+                  (click)="editInvoice(inv)"
+                ></button>
+              </span>
+              <button
+                pButton
+                pRipple
+                type="button"
+                icon="pi pi-download"
+                text
+                class="p-button-sm p-button-info"
+                (click)="downloadPDFInvoice(inv)"
+              ></button>
+            </div>
           </div>
         </td>
       </tr>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CardModule } from 'primeng/card';
@@ -16,7 +16,10 @@ import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { QuickAddInvoiceItem } from './quick-add-invoice-item/quick-add-invoice-item';
 import { injectSpeedInsights } from '@vercel/speed-insights';
-import { inject } from '@vercel/analytics';
+import { inject as injectVercelAnalytics } from '@vercel/analytics';
+import { catchError, forkJoin, of } from 'rxjs';
+import { InvoiceService } from '../../services/invoice.service';
+import { ClientService } from '../../services/client.service';
 
 
 // Define interfaces based on Mongoose models
@@ -32,14 +35,20 @@ interface IClient {
 }
 
 interface IInvoice {
+  /** Backend id for /invoice/form/:id */
+  id?: string;
   invoiceNumber: string;
   invoiceDate: Date;
   client: string;
   company: string;
+  /** Resolved total for display and charts (API field or computed from line items). */
+  totalAmount: number;
   cgstRate?: number;
   sgstRate?: number;
-  status: 'Draft' | 'Paid' | 'Cancelled';
+  status: 'Draft' | 'Paid' | 'Cancelled' | 'Finalized';
   dueDate?: Date;
+  /** From populated client on API; used for top clients / charts */
+  clientState?: string;
 }
 
 interface IInvoiceAmount {
@@ -109,6 +118,9 @@ interface ITopClient {
       }
       .status-cancelled {
         @apply text-red-600 dark:text-red-400 font-semibold;
+      }
+      .status-finalized {
+        @apply text-indigo-600 dark:text-indigo-400 font-semibold;
       }
       .filter-pill {
         @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium;
@@ -198,159 +210,34 @@ interface ITopClient {
   ],
 })
 export class Dashboard implements OnInit {
-  // Dummy data based on Mongoose models
-  clients: IClient[] = [
-    {
-      name: 'ABC Corp',
-      address: '123 Street, Mumbai',
-      email: 'abc@corp.com',
-      phone: '9876543210',
-      gstin: '27AAAAA0000A1Z5',
-      state: 'Maharashtra',
-      stateCode: '27',
-      status: 'Active',
-    },
-    {
-      name: 'XYZ Ltd',
-      address: '456 Road, Delhi',
-      email: 'xyz@ltd.com',
-      phone: '9123456789',
-      gstin: '07AAAAA0000A1Z5',
-      state: 'Delhi',
-      stateCode: '07',
-      status: 'Active',
-    },
-    {
-      name: 'PQR Inc',
-      address: '789 Avenue, Bangalore',
-      email: 'pqr@inc.com',
-      phone: '9988776655',
-      gstin: '29AAAAA0000A1Z5',
-      state: 'Karnataka',
-      stateCode: '29',
-      status: 'Inactive',
-    },
-    {
-      name: 'LMN Ltd',
-      address: '101 Lane, Chennai',
-      email: 'lmn@ltd.com',
-      phone: '9871234567',
-      gstin: '33AAAAA0000A1Z5',
-      state: 'Tamil Nadu',
-      stateCode: '33',
-      status: 'Active',
-    },
-  ];
+  private readonly invoiceService = inject(InvoiceService);
+  private readonly clientService = inject(ClientService);
 
-  invoices: IInvoice[] = [
-    {
-      invoiceNumber: 'INV001',
-      invoiceDate: new Date('2025-01-10'),
-      client: 'ABC Corp',
-      company: 'MyCompany',
-      cgstRate: 6,
-      sgstRate: 6,
-      status: 'Paid',
-      dueDate: new Date('2025-02-10'),
-    },
-    {
-      invoiceNumber: 'INV002',
-      invoiceDate: new Date('2025-02-15'),
-      client: 'XYZ Ltd',
-      company: 'MyCompany',
-      cgstRate: 6,
-      sgstRate: 6,
-      status: 'Draft',
-      dueDate: new Date('2025-03-15'),
-    },
-    {
-      invoiceNumber: 'INV003',
-      invoiceDate: new Date('2025-03-20'),
-      client: 'PQR Inc',
-      company: 'MyCompany',
-      cgstRate: 6,
-      sgstRate: 6,
-      status: 'Cancelled',
-      dueDate: new Date('2025-04-20'),
-    },
-    {
-      invoiceNumber: 'INV004',
-      invoiceDate: new Date('2025-04-01'),
-      client: 'LMN Ltd',
-      company: 'MyCompany',
-      cgstRate: 6,
-      sgstRate: 6,
-      status: 'Draft',
-      dueDate: new Date('2025-04-15'),
-    },
-    {
-      invoiceNumber: 'INV005',
-      invoiceDate: new Date('2025-05-10'),
-      client: 'ABC Corp',
-      company: 'MyCompany',
-      cgstRate: 6,
-      sgstRate: 6,
-      status: 'Paid',
-      dueDate: new Date('2025-05-20'),
-    },
-  ];
+  /** Populated from GET Clients (for name/state when invoice stores only client id). */
+  private clientDetailsById = new Map<string, { name: string; state: string }>();
 
-  invoiceAmounts: IInvoiceAmount[] = [
-    {
-      invoice: 'INV001',
-      subtotal: 10000,
-      cgstAmount: 600,
-      sgstAmount: 600,
-      grandTotal: 11200,
-      amountInWords: 'Eleven Thousand Two Hundred',
-    },
-    {
-      invoice: 'INV002',
-      subtotal: 15000,
-      cgstAmount: 900,
-      sgstAmount: 900,
-      grandTotal: 16800,
-      amountInWords: 'Sixteen Thousand Eight Hundred',
-    },
-    {
-      invoice: 'INV003',
-      subtotal: 20000,
-      cgstAmount: 1200,
-      sgstAmount: 1200,
-      grandTotal: 22400,
-      amountInWords: 'Twenty-Two Thousand Four Hundred',
-    },
-    {
-      invoice: 'INV004',
-      subtotal: 25000,
-      cgstAmount: 1500,
-      sgstAmount: 1500,
-      grandTotal: 28000,
-      amountInWords: 'Twenty-Eight Thousand',
-    },
-    {
-      invoice: 'INV005',
-      subtotal: 18000,
-      cgstAmount: 1080,
-      sgstAmount: 1080,
-      grandTotal: 20160,
-      amountInWords: 'Twenty Thousand One Hundred Sixty',
-    },
-  ];
+  clients: IClient[] = [];
+  invoices: IInvoice[] = [];
+  invoiceAmounts: IInvoiceAmount[] = [];
 
   // Summary data
   summary = {
     totalClients: 0,
     totalInvoices: 0,
+    /** Sum of amounts on all invoices (billed value). */
     totalRevenue: 0,
     paidInvoices: 0,
-    overdueInvoices: 0,
-    overdueAmount: 0,
+    /** Sum of amounts where status is Paid. */
+    paidRevenue: 0,
+    /** Draft + Finalized (not yet paid). */
+    outstandingInvoices: 0,
+    outstandingAmount: 0,
   };
 
   // Chart data
   invoiceStatusChartData: any;
-  clientStateChartData: any;
+  /** Revenue by company (top companies). */
+  companyRevenueChartData: any;
   monthlyRevenueChartData: any;
   invoiceAgingChartData: any;
   invoiceStatusTrendChartData: any;
@@ -381,6 +268,7 @@ export class Dashboard implements OnInit {
   statusOptions = [
     { label: 'Paid', value: 'Paid' },
     { label: 'Draft', value: 'Draft' },
+    { label: 'Finalized', value: 'Finalized' },
     { label: 'Cancelled', value: 'Cancelled' },
   ];
   get clientOptions(): { label: string; value: string }[] {
@@ -410,15 +298,23 @@ export class Dashboard implements OnInit {
   /** Chart data for filtered invoices (by status count or by month) */
   get filteredChartData(): { labels: string[]; datasets: { label: string; data: number[]; backgroundColor?: string[]; borderColor?: string; fill?: boolean; tension?: number }[] } {
     if (this.customWidgetView === 'bar') {
-      const statusCounts = { Paid: 0, Draft: 0, Cancelled: 0 };
-      this.filteredInvoices.forEach((i) => (statusCounts[i.status as keyof typeof statusCounts] += 1));
+      const statusCounts = { Paid: 0, Draft: 0, Cancelled: 0, Finalized: 0 };
+      this.filteredInvoices.forEach((i) => {
+        const k = i.status as keyof typeof statusCounts;
+        if (k in statusCounts) statusCounts[k] += 1;
+      });
       return {
-        labels: ['Paid', 'Draft', 'Cancelled'],
+        labels: ['Paid', 'Draft', 'Finalized', 'Cancelled'],
         datasets: [
           {
             label: 'Count',
-            data: [statusCounts.Paid, statusCounts.Draft, statusCounts.Cancelled],
-            backgroundColor: ['#34D399', '#FBBF24', '#EF4444'],
+            data: [
+              statusCounts.Paid,
+              statusCounts.Draft,
+              statusCounts.Finalized,
+              statusCounts.Cancelled,
+            ],
+            backgroundColor: ['#34D399', '#FBBF24', '#6366F1', '#EF4444'],
           },
         ],
       };
@@ -428,7 +324,7 @@ export class Dashboard implements OnInit {
       this.filteredInvoices.forEach((i) => {
         const d = new Date(i.invoiceDate);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        byMonth[key] = (byMonth[key] || 0) + (this.invoiceAmountMap[i.invoiceNumber]?.grandTotal || 0);
+        byMonth[key] = (byMonth[key] || 0) + (i.totalAmount || 0);
       });
       const sorted = Object.keys(byMonth).sort();
       return {
@@ -458,44 +354,327 @@ export class Dashboard implements OnInit {
     this.filterDateTo = null;
   }
 
-  /** Dummy activity feed for dashboard */
-  activityItems: { icon: string; text: string; time: string; color: string }[] = [
-    { icon: 'pi pi-check-circle', text: 'Invoice INV005 marked as Paid', time: '2 hours ago', color: 'text-emerald-500' },
-    { icon: 'pi pi-file-edit', text: 'Invoice INV004 updated', time: '5 hours ago', color: 'text-amber-500' },
-    { icon: 'pi pi-user-plus', text: 'New client LMN Ltd added', time: '1 day ago', color: 'text-blue-500' },
-    { icon: 'pi pi-send', text: 'Invoice INV002 sent to XYZ Ltd', time: '2 days ago', color: 'text-violet-500' },
-    { icon: 'pi pi-wallet', text: 'Payment received ₹11,200 (INV001)', time: '3 days ago', color: 'text-emerald-500' },
-  ];
+  /** Populated from live data when available (optional; no placeholder copy). */
+  activityItems: { icon: string; text: string; time: string; color: string }[] = [];
 
   ngOnInit() {
-    inject();
+    injectVercelAnalytics();
     injectSpeedInsights();
-    this.initializeData();
-    this.initializeCharts();
+    forkJoin({
+      invoices: this.invoiceService.searchInvoices({}).pipe(catchError(() => of(null))),
+      clients: this.clientService.getClients().pipe(catchError(() => of(null))),
+    }).subscribe(({ invoices: invRes, clients: cliRes }) => {
+      this.clientDetailsById = this.buildClientDetailsMap(cliRes);
+      const list = invRes === null ? [] : this.extractInvoiceList(invRes);
+      if (list.length > 0) {
+        this.applyInvoiceListFromApi(list);
+      } else {
+        this.applyEmptyInvoiceDataset();
+      }
+      this.initializeData();
+      this.initializeCharts();
+    });
+  }
+
+  /** Consistent display for invoice / due dates (avoids invalid Date pipe output). */
+  formatInvoiceDate(d: Date | undefined): string {
+    if (!d || isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  /** Route param for invoice form: prefers API id, else invoice number (legacy). */
+  invoiceFormRouteId(inv: IInvoice): string {
+    return inv.id || inv.invoiceNumber;
+  }
+
+  private extractInvoiceList(res: unknown): any[] {
+    if (Array.isArray(res)) return res;
+    if (res && typeof res === 'object') {
+      const o = res as Record<string, unknown>;
+      if (Array.isArray(o['data'])) return o['data'] as any[];
+      if (Array.isArray(o['invoices'])) return o['invoices'] as any[];
+    }
+    return [];
+  }
+
+  private extractClientList(res: unknown): any[] {
+    if (Array.isArray(res)) return res;
+    if (res && typeof res === 'object') {
+      const o = res as Record<string, unknown>;
+      if (Array.isArray(o['data'])) return o['data'] as any[];
+      if (Array.isArray(o['clients'])) return o['clients'] as any[];
+    }
+    return [];
+  }
+
+  private buildClientDetailsMap(res: unknown): Map<string, { name: string; state: string }> {
+    const map = new Map<string, { name: string; state: string }>();
+    for (const c of this.extractClientList(res)) {
+      const id = this.extractRefId(c?._id ?? c?.id);
+      if (!id) continue;
+      map.set(id, {
+        name: String(c?.name ?? '').trim() || 'Unknown client',
+        state: String(c?.state ?? '').trim(),
+      });
+    }
+    return map;
+  }
+
+  /** Mongo extended JSON { $oid }, nested _id, or plain string id. */
+  private extractRefId(ref: unknown): string | undefined {
+    if (ref == null) return undefined;
+    if (typeof ref === 'string' || typeof ref === 'number') {
+      const s = String(ref).trim();
+      return s || undefined;
+    }
+    if (typeof ref === 'object') {
+      const o = ref as Record<string, unknown>;
+      if (typeof o['$oid'] === 'string') return o['$oid'];
+      if (o['_id'] != null) return this.extractRefId(o['_id']);
+      if (o['id'] != null) return this.extractRefId(o['id']);
+    }
+    return undefined;
+  }
+
+  private isBareMongoOid(obj: unknown): boolean {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      '$oid' in (obj as object) &&
+      Object.keys(obj as object).length === 1
+    );
+  }
+
+  /** Parse API numbers: plain, string, Mongo Decimal128 / Double. */
+  private parseNumberish(v: unknown): number | undefined {
+    if (v == null || v === '') return undefined;
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string') {
+      const n = Number(String(v).replace(/,/g, '').trim());
+      return Number.isFinite(n) ? n : undefined;
+    }
+    if (typeof v === 'object' && v !== null) {
+      const o = v as Record<string, unknown>;
+      if (typeof o['$numberDecimal'] === 'string') return Number(o['$numberDecimal']);
+      if (typeof o['$numberDouble'] === 'string' || typeof o['$numberDouble'] === 'number') {
+        return Number(o['$numberDouble']);
+      }
+      if (typeof o['$numberInt'] === 'string' || typeof o['$numberInt'] === 'number') {
+        return Number(o['$numberInt']);
+      }
+    }
+    return undefined;
+  }
+
+  private parseApiDate(value: unknown): Date {
+    if (value == null) return new Date(NaN);
+    if (value instanceof Date) return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return new Date(value);
+    if (typeof value === 'string') {
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? new Date(NaN) : d;
+    }
+    if (typeof value === 'object' && value !== null) {
+      const o = value as Record<string, unknown>;
+      if (o['$date'] != null) {
+        const inner = o['$date'];
+        if (typeof inner === 'string' || typeof inner === 'number') return new Date(inner);
+        if (inner && typeof inner === 'object' && '$numberLong' in (inner as object)) {
+          return new Date(Number((inner as { $numberLong: string }).$numberLong));
+        }
+      }
+    }
+    return new Date(NaN);
+  }
+
+  /**
+   * Same monetary field as search-invoice (`inv.amount`); then other common keys; else line items.
+   */
+  private resolveGrandTotal(raw: any): number {
+    const tryKeys = ['amount', 'grandTotal', 'total', 'totalAmount', 'invoiceAmount'];
+    for (const k of tryKeys) {
+      const n = this.parseNumberish(raw[k]);
+      if (n !== undefined && n >= 0) return n;
+    }
+    const items = raw.items;
+    if (!Array.isArray(items) || items.length === 0) {
+      return 0;
+    }
+    let subtotal = 0;
+    for (const it of items) {
+      const lineAmt = this.parseNumberish(it?.amount);
+      if (lineAmt !== undefined && lineAmt > 0) {
+        subtotal += lineAmt;
+        continue;
+      }
+      const q = this.parseNumberish(it?.quantity) ?? 1;
+      const r = this.parseNumberish(it?.rate) ?? this.parseNumberish(it?.price) ?? 0;
+      subtotal += q * r;
+    }
+    const cgstAmt = Number(raw.cgstAmount);
+    const sgstAmt = Number(raw.sgstAmount);
+    const cgstR = Number(raw.cgstRate ?? 0) / 100;
+    const sgstR = Number(raw.sgstRate ?? 0) / 100;
+    let tax = 0;
+    if (Number.isFinite(cgstAmt) && cgstAmt > 0) tax += cgstAmt;
+    if (Number.isFinite(sgstAmt) && sgstAmt > 0) tax += sgstAmt;
+    if (tax === 0) tax = subtotal * cgstR + subtotal * sgstR;
+    const total = subtotal + tax;
+    return Math.round(total * 100) / 100;
+  }
+
+  private resolveClientFromRaw(raw: any): { name: string; state: string } {
+    const cn = raw.clientName != null ? String(raw.clientName).trim() : '';
+    if (cn) {
+      return { name: cn, state: String(raw.clientState ?? '').trim() };
+    }
+    const cf = raw.client ?? raw.clientId;
+    if (cf && typeof cf === 'object' && !this.isBareMongoOid(cf)) {
+      return {
+        name: String(cf.name ?? raw.clientName ?? 'Unknown client').trim() || 'Unknown client',
+        state: String(cf.state ?? '').trim(),
+      };
+    }
+    const id = this.extractRefId(cf) ?? this.extractRefId(raw.clientId);
+    if (id) {
+      const d = this.clientDetailsById.get(id);
+      if (d) return { name: d.name, state: d.state };
+    }
+    return { name: 'Unknown client', state: '' };
+  }
+
+  private normalizeInvoiceStatus(raw: string | undefined): IInvoice['status'] {
+    const s = (raw ?? '').trim();
+    if (s === 'Paid' || s === 'Draft' || s === 'Cancelled' || s === 'Finalized') return s;
+    return 'Draft';
+  }
+
+  private resolveCompanyName(raw: any): string {
+    if (raw.companyName != null && String(raw.companyName).trim() !== '') {
+      return String(raw.companyName);
+    }
+    if (raw.company && typeof raw.company === 'object' && raw.company.name != null) {
+      return String(raw.company.name);
+    }
+    if (typeof raw.company === 'string') return raw.company;
+    return '';
+  }
+
+  private mapApiRow(raw: any): { invoice: IInvoice; amountRow: IInvoiceAmount } {
+    const invoiceNumber = String(raw.invoiceNumber ?? raw.invoiceNo ?? '').trim() || '—';
+    const grandTotal = this.resolveGrandTotal(raw);
+    const cgst = Number(raw.cgstAmount ?? 0);
+    const sgst = Number(raw.sgstAmount ?? 0);
+    const subtotal = Number(
+      raw.subtotal ?? (grandTotal > 0 ? Math.max(0, grandTotal - cgst - sgst) : 0),
+    );
+
+    const { name: clientName, state: clientState } = this.resolveClientFromRaw(raw);
+
+    const id = this.extractRefId(raw._id ?? raw.id);
+
+    let invoiceDate = this.parseApiDate(raw.invoiceDate);
+    if (isNaN(invoiceDate.getTime())) {
+      invoiceDate = this.parseApiDate(raw.createdAt);
+    }
+    if (isNaN(invoiceDate.getTime())) {
+      invoiceDate = new Date();
+    }
+
+    let dueDate: Date | undefined;
+    if (raw.dueDate != null) {
+      const dd = this.parseApiDate(raw.dueDate);
+      dueDate = isNaN(dd.getTime()) ? undefined : dd;
+    }
+
+    const invoice: IInvoice = {
+      id,
+      invoiceNumber,
+      invoiceDate,
+      client: clientName,
+      company: this.resolveCompanyName(raw),
+      cgstRate: raw.cgstRate,
+      sgstRate: raw.sgstRate,
+      status: this.normalizeInvoiceStatus(raw.status),
+      dueDate,
+      clientState,
+      totalAmount: grandTotal,
+    };
+
+    const amountRow: IInvoiceAmount = {
+      invoice: invoiceNumber,
+      subtotal,
+      cgstAmount: cgst,
+      sgstAmount: sgst,
+      grandTotal,
+      amountInWords: String(raw.amountInWords ?? ''),
+    };
+
+    return { invoice, amountRow };
+  }
+
+  private applyInvoiceListFromApi(list: any[]) {
+    this.invoices = [];
+    this.invoiceAmounts = [];
+    for (const raw of list) {
+      const { invoice, amountRow } = this.mapApiRow(raw);
+      this.invoices.push(invoice);
+      this.invoiceAmounts.push(amountRow);
+    }
+  }
+
+  private applyEmptyInvoiceDataset() {
+    this.invoices = [];
+    this.invoiceAmounts = [];
+    this.clients = [];
+  }
+
+  private buildClientsFromInvoices(): IClient[] {
+    const byName = new Map<string, IClient>();
+    for (const inv of this.invoices) {
+      if (!inv.client || inv.client === '—') continue;
+      if (!byName.has(inv.client)) {
+        const state = inv.clientState?.trim() || '';
+        byName.set(inv.client, {
+          name: inv.client,
+          address: '',
+          email: '',
+          phone: '',
+          gstin: '',
+          state,
+          stateCode: '',
+          status: 'Active',
+        });
+      }
+    }
+    return Array.from(byName.values());
   }
 
   initializeData() {
-    // Map invoice amounts for easy lookup (must be first)
+    this.invoiceAmountMap = {};
     this.invoiceAmounts.forEach((ia) => {
       this.invoiceAmountMap[ia.invoice] = ia;
     });
 
-    // Calculate summary metrics
+    this.clients = this.buildClientsFromInvoices();
+
     this.summary.totalClients = this.clients.length;
     this.summary.totalInvoices = this.invoices.length;
-    this.summary.totalRevenue = this.invoiceAmounts.reduce((sum, ia) => sum + ia.grandTotal, 0);
+    this.summary.totalRevenue = this.invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0);
     this.summary.paidInvoices = this.invoices.filter((i) => i.status === 'Paid').length;
+    this.summary.paidRevenue = this.invoices
+      .filter((i) => i.status === 'Paid')
+      .reduce((sum, i) => sum + (i.totalAmount || 0), 0);
 
-    // Calculate overdue invoices (use today for real UX; dummy data still works)
+    const outstanding = this.invoices.filter((i) => i.status === 'Draft' || i.status === 'Finalized');
+    this.summary.outstandingInvoices = outstanding.length;
+    this.summary.outstandingAmount = outstanding.reduce((sum, i) => sum + (i.totalAmount || 0), 0);
+
     const currentDate = this.today;
-    this.summary.overdueInvoices = this.invoices.filter(
-      (i) => i.status === 'Draft' && i.dueDate && i.dueDate < currentDate,
-    ).length;
-    this.summary.overdueAmount = this.invoices
-      .filter((i) => i.status === 'Draft' && i.dueDate && i.dueDate < currentDate)
-      .reduce((sum, i) => sum + (this.invoiceAmountMap[i.invoiceNumber]?.grandTotal || 0), 0);
-
-    // Invoices due in the next 7 days (draft only)
     const in7Days = new Date(currentDate);
     in7Days.setDate(in7Days.getDate() + 7);
     this.invoicesDueSoon = this.invoices.filter(
@@ -505,17 +684,8 @@ export class Dashboard implements OnInit {
         i.dueDate >= currentDate &&
         i.dueDate <= in7Days,
     );
-    // Demo: if none due soon, show one draft as "due in 3 days"
-    if (this.invoicesDueSoon.length === 0) {
-      const draft = this.invoices.find((i) => i.status === 'Draft');
-      if (draft) {
-        const dueIn3 = new Date(currentDate);
-        dueIn3.setDate(dueIn3.getDate() + 3);
-        this.invoicesDueSoon = [{ ...draft, dueDate: dueIn3 }];
-      }
-    }
 
-    // This month stats (by invoice date)
+    this.thisMonth = { revenue: 0, invoiceCount: 0 };
     const y = this.today.getFullYear();
     const m = this.today.getMonth();
     this.invoices
@@ -525,21 +695,20 @@ export class Dashboard implements OnInit {
       })
       .forEach((i) => {
         this.thisMonth.invoiceCount += 1;
-        this.thisMonth.revenue += this.invoiceAmountMap[i.invoiceNumber]?.grandTotal || 0;
+        this.thisMonth.revenue += i.totalAmount || 0;
       });
 
-    // Recent invoices (last 5)
-    this.recentInvoices = this.invoices.slice(0, 5);
+    this.recentInvoices = [...this.invoices]
+      .sort((a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime())
+      .slice(0, 5);
 
-    // Top clients by invoice value
     const clientInvoiceMap = this.invoices.reduce(
       (acc, invoice) => {
         if (!acc[invoice.client]) {
           acc[invoice.client] = { totalInvoices: 0, totalAmount: 0 };
         }
         acc[invoice.client].totalInvoices += 1;
-        acc[invoice.client].totalAmount +=
-          this.invoiceAmountMap[invoice.invoiceNumber]?.grandTotal || 0;
+        acc[invoice.client].totalAmount += invoice.totalAmount || 0;
         return acc;
       },
       {} as { [key: string]: { totalInvoices: number; totalAmount: number } },
@@ -550,10 +719,94 @@ export class Dashboard implements OnInit {
         name: clientName,
         totalInvoices: clientInvoiceMap[clientName].totalInvoices,
         totalAmount: clientInvoiceMap[clientName].totalAmount,
-        state: this.clients.find((c) => c.name === clientName)?.state || '',
+        state:
+          this.clients.find((c) => c.name === clientName)?.state ||
+          this.invoices.find((i) => i.client === clientName)?.clientState ||
+          '',
       }))
       .sort((a, b) => b.totalAmount - a.totalAmount)
       .slice(0, 5);
+
+    this.rebuildActivityItems();
+  }
+
+  private rebuildActivityItems(): void {
+    const sorted = [...this.invoices].sort(
+      (a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime(),
+    );
+    this.activityItems = sorted.slice(0, 12).map((inv) => ({
+      icon: this.getStatusIcon(inv.status),
+      text: `${inv.invoiceNumber} · ${inv.client} · ${inv.status} · ${this.formatInr(inv.totalAmount)}`,
+      time: this.formatRelativeTime(inv.invoiceDate),
+      color: this.getActivityColor(inv.status),
+    }));
+  }
+
+  private formatInr(n: number): string {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(n || 0);
+  }
+
+  private formatRelativeTime(d: Date): string {
+    const t = new Date(d).getTime();
+    if (isNaN(t)) return '—';
+    const diff = Date.now() - t;
+    const days = Math.floor(diff / 86400000);
+    if (days <= 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} wk ago`;
+    return this.formatInvoiceDate(d);
+  }
+
+  private getActivityColor(status: string): string {
+    switch (status) {
+      case 'Paid':
+        return 'text-emerald-500';
+      case 'Draft':
+        return 'text-amber-500';
+      case 'Finalized':
+        return 'text-indigo-500';
+      case 'Cancelled':
+        return 'text-red-500';
+      default:
+        return 'text-slate-500';
+    }
+  }
+
+  getSeverity(
+    status: string,
+  ): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined | null {
+    switch (status) {
+      case 'Paid':
+        return 'success';
+      case 'Draft':
+        return 'warn';
+      case 'Cancelled':
+        return 'danger';
+      case 'Finalized':
+        return 'info';
+      default:
+        return 'info';
+    }
+  }
+
+  getStatusIcon(status: string | undefined): string {
+    switch (status) {
+      case 'Paid':
+        return 'pi pi-check-circle';
+      case 'Draft':
+        return 'pi pi-file-edit';
+      case 'Cancelled':
+        return 'pi pi-times-circle';
+      case 'Finalized':
+        return 'pi pi-send';
+      default:
+        return 'pi pi-info-circle';
+    }
   }
 
   initializeCharts() {
@@ -614,62 +867,55 @@ export class Dashboard implements OnInit {
       },
     };
 
-    // Invoice Status Pie Chart
     const statusCounts = {
       Paid: this.invoices.filter((i) => i.status === 'Paid').length,
       Draft: this.invoices.filter((i) => i.status === 'Draft').length,
+      Finalized: this.invoices.filter((i) => i.status === 'Finalized').length,
       Cancelled: this.invoices.filter((i) => i.status === 'Cancelled').length,
     };
 
     this.invoiceStatusChartData = {
-      labels: ['Paid', 'Draft', 'Cancelled'],
+      labels: ['Paid', 'Draft', 'Finalized', 'Cancelled'],
       datasets: [
         {
-          data: [statusCounts.Paid, statusCounts.Draft, statusCounts.Cancelled],
-          backgroundColor: ['#34D399', '#FBBF24', '#EF4444'],
-          hoverBackgroundColor: ['#10B981', '#F59E0B', '#DC2626'],
+          data: [
+            statusCounts.Paid,
+            statusCounts.Draft,
+            statusCounts.Finalized,
+            statusCounts.Cancelled,
+          ],
+          backgroundColor: ['#34D399', '#FBBF24', '#6366F1', '#EF4444'],
+          hoverBackgroundColor: ['#10B981', '#F59E0B', '#4F46E5', '#DC2626'],
         },
       ],
     };
 
-    // Client State Bar Chart
-    const stateCounts = this.clients.reduce(
-      (acc, client) => {
-        acc[client.state] = (acc[client.state] || 0) + 1;
-        return acc;
-      },
-      {} as { [key: string]: number },
-    );
-
-    this.clientStateChartData = {
-      labels: Object.keys(stateCounts),
+    const companyTotals: Record<string, number> = {};
+    for (const inv of this.invoices) {
+      const key = inv.company?.trim() || 'Unassigned';
+      companyTotals[key] = (companyTotals[key] || 0) + (inv.totalAmount || 0);
+    }
+    const companyEntries = Object.entries(companyTotals).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    this.companyRevenueChartData = {
+      labels: companyEntries.length ? companyEntries.map(([k]) => k) : ['No data'],
       datasets: [
         {
-          label: 'Clients by State',
-          data: Object.values(stateCounts),
-          backgroundColor: '#3B82F6',
-          borderColor: '#2563EB',
+          label: 'Total billed (₹)',
+          data: companyEntries.length ? companyEntries.map(([, v]) => v) : [0],
+          backgroundColor: '#8B5CF6',
+          borderColor: '#7C3AED',
           borderWidth: 1,
         },
       ],
     };
 
-    // Monthly Revenue Line Chart (dummy data for 6 months)
-    const monthlyRevenue = [
-      { month: 'Jan 2025', revenue: 50000 },
-      { month: 'Feb 2025', revenue: 60000 },
-      { month: 'Mar 2025', revenue: 45000 },
-      { month: 'Apr 2025', revenue: 70000 },
-      { month: 'May 2025', revenue: 55000 },
-      { month: 'Jun 2025', revenue: 80000 },
-    ];
-
+    const monthly = this.buildRollingMonthlyRevenue();
     this.monthlyRevenueChartData = {
-      labels: monthlyRevenue.map((m) => m.month),
+      labels: monthly.labels,
       datasets: [
         {
           label: 'Revenue (₹)',
-          data: monthlyRevenue.map((m) => m.revenue),
+          data: monthly.data,
           fill: false,
           borderColor: '#8B5CF6',
           tension: 0.4,
@@ -711,36 +957,34 @@ export class Dashboard implements OnInit {
       ],
     };
 
-    // Invoice Status Trend Line Chart (dummy data for 6 months)
-    const statusTrend = [
-      { month: 'Jan 2025', paid: 2, draft: 1, cancelled: 0 },
-      { month: 'Feb 2025', paid: 3, draft: 2, cancelled: 1 },
-      { month: 'Mar 2025', paid: 1, draft: 3, cancelled: 0 },
-      { month: 'Apr 2025', paid: 4, draft: 1, cancelled: 2 },
-      { month: 'May 2025', paid: 2, draft: 2, cancelled: 1 },
-      { month: 'Jun 2025', paid: 3, draft: 1, cancelled: 0 },
-    ];
-
+    const trend = this.buildRollingStatusTrend();
     this.invoiceStatusTrendChartData = {
-      labels: statusTrend.map((s) => s.month),
+      labels: trend.labels,
       datasets: [
         {
           label: 'Paid',
-          data: statusTrend.map((s) => s.paid),
+          data: trend.paid,
           fill: false,
           borderColor: '#34D399',
           tension: 0.4,
         },
         {
           label: 'Draft',
-          data: statusTrend.map((s) => s.draft),
+          data: trend.draft,
           fill: false,
           borderColor: '#FBBF24',
           tension: 0.4,
         },
         {
+          label: 'Finalized',
+          data: trend.finalized,
+          fill: false,
+          borderColor: '#6366F1',
+          tension: 0.4,
+        },
+        {
           label: 'Cancelled',
-          data: statusTrend.map((s) => s.cancelled),
+          data: trend.cancelled,
           fill: false,
           borderColor: '#EF4444',
           tension: 0.4,
@@ -749,17 +993,57 @@ export class Dashboard implements OnInit {
     };
   }
 
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'Draft':
-        return 'status-draft';
-      case 'Paid':
-        return 'status-paid';
-      case 'Cancelled':
-        return 'status-cancelled';
-      default:
-        return '';
+  /** Last 6 calendar months including current; revenue from invoice totals. */
+  private buildRollingMonthlyRevenue(): { labels: string[]; data: number[] } {
+    const byMonth: Record<string, number> = {};
+    this.invoices.forEach((i) => {
+      const d = new Date(i.invoiceDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      byMonth[key] = (byMonth[key] || 0) + (i.totalAmount || 0);
+    });
+    const labels: string[] = [];
+    const data: number[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      labels.push(d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }));
+      data.push(byMonth[key] || 0);
     }
+    return { labels, data };
+  }
+
+  /** Per-month status counts for the same rolling 6-month window. */
+  private buildRollingStatusTrend(): {
+    labels: string[];
+    paid: number[];
+    draft: number[];
+    finalized: number[];
+    cancelled: number[];
+  } {
+    const now = new Date();
+    const keys: string[] = [];
+    const labels: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+      labels.push(d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }));
+    }
+    const paid = keys.map(() => 0);
+    const draft = keys.map(() => 0);
+    const finalized = keys.map(() => 0);
+    const cancelled = keys.map(() => 0);
+    this.invoices.forEach((inv) => {
+      const d = new Date(inv.invoiceDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const idx = keys.indexOf(key);
+      if (idx < 0) return;
+      if (inv.status === 'Paid') paid[idx] += 1;
+      else if (inv.status === 'Draft') draft[idx] += 1;
+      else if (inv.status === 'Finalized') finalized[idx] += 1;
+      else if (inv.status === 'Cancelled') cancelled[idx] += 1;
+    });
+    return { labels, paid, draft, finalized, cancelled };
   }
 
   getGreeting(): string {

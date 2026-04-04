@@ -31,36 +31,57 @@
     <section class="mb-6 sm:mb-8" aria-label="Overview">
       <h2 class="text-base sm:text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3 sm:mb-4">Overview</h2>
       <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-blue-500">
-          <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-              <i class="pi pi-users text-lg sm:text-2xl text-blue-600 dark:text-blue-400"></i>
+        <a
+          routerLink="/client/search"
+          class="kpi-tile-link block rounded-xl no-underline text-inherit focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          title="Open client search"
+        >
+          <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-blue-500 h-full">
+            <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+              <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                <i class="pi pi-users text-lg sm:text-2xl text-blue-600 dark:text-blue-400"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  Clients
+                  <i class="pi pi-arrow-up-right text-[10px] opacity-60"></i>
+                </p>
+                <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.totalClients }}</p>
+              </div>
             </div>
-            <div class="min-w-0">
-              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Clients</p>
-              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.totalClients }}</p>
+          </p-card>
+        </a>
+        <a
+          routerLink="/invoice/search"
+          class="kpi-tile-link block rounded-xl no-underline text-inherit focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          title="Open invoice search"
+        >
+          <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-emerald-500 h-full">
+            <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
+              <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                <i class="pi pi-file text-lg sm:text-2xl text-emerald-600 dark:text-emerald-400"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  Invoices
+                  <i class="pi pi-arrow-up-right text-[10px] opacity-60"></i>
+                </p>
+                <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.totalInvoices }}</p>
+              </div>
             </div>
-          </div>
-        </p-card>
-        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-emerald-500">
-          <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-              <i class="pi pi-file text-lg sm:text-2xl text-emerald-600 dark:text-emerald-400"></i>
-            </div>
-            <div class="min-w-0">
-              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Invoices</p>
-              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.totalInvoices }}</p>
-            </div>
-          </div>
-        </p-card>
+          </p-card>
+        </a>
         <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-amber-500 col-span-2 lg:col-span-1">
           <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
             <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
               <i class="pi pi-wallet text-lg sm:text-2xl text-amber-600 dark:text-amber-400"></i>
             </div>
             <div class="min-w-0">
-              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Revenue</p>
-              <p class="text-base sm:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate" pTooltip="Total revenue from all invoices">₹{{ summary.totalRevenue | number }}</p>
+              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Revenue (all)</p>
+              <p class="text-base sm:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate" pTooltip="Sum of amounts on every invoice">
+                {{ summary.totalRevenue | currency: 'INR' }}
+              </p>
+              <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">Paid: {{ summary.paidRevenue | currency: 'INR' }}</p>
             </div>
           </div>
         </p-card>
@@ -75,15 +96,15 @@
             </div>
           </div>
         </p-card>
-        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-red-500">
+        <p-card class="dashboard-card kpi-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl border-0 overflow-hidden border-l-4 border-l-orange-500">
           <div class="flex items-center gap-2 sm:gap-4 p-3 sm:p-4">
-            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-              <i class="pi pi-exclamation-triangle text-lg sm:text-2xl text-red-600 dark:text-red-400"></i>
+            <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center">
+              <i class="pi pi-hourglass text-lg sm:text-2xl text-orange-600 dark:text-orange-400"></i>
             </div>
             <div class="min-w-0">
-              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Overdue</p>
-              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.overdueInvoices }}</p>
-              <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">₹{{ summary.overdueAmount | number }}</p>
+              <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding</p>
+              <p class="text-lg sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ summary.outstandingInvoices }}</p>
+              <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate" pTooltip="Draft + Finalized (unpaid)">Draft / Finalized · {{ summary.outstandingAmount | currency: 'INR' }}</p>
             </div>
           </div>
         </p-card>
@@ -101,7 +122,7 @@
           <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Invoices</p>
           <p class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">{{ thisMonth.invoiceCount }}</p>
           <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2">Revenue</p>
-          <p class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">₹{{ thisMonth.revenue | number }}</p>
+          <p class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">{{ thisMonth.revenue | currency: 'INR' }}</p>
         </div>
       </p-card>
       <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-4 border-t-4 border-t-amber-500">
@@ -127,10 +148,10 @@
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td class="!text-xs sm:!text-sm font-medium">{{ inv.invoiceNumber }}</td>
                   <td class="!text-xs sm:!text-sm">{{ inv.client }}</td>
-                  <td class="!text-xs sm:!text-sm">{{ inv.dueDate | date: 'shortDate' }}</td>
-                  <td class="!text-xs sm:!text-sm">₹{{ invoiceAmountMap[inv.invoiceNumber]?.grandTotal | number }}</td>
+                  <td class="!text-xs sm:!text-sm">{{ formatInvoiceDate(inv.dueDate) }}</td>
+                  <td class="!text-xs sm:!text-sm font-semibold">{{ inv.totalAmount | currency: 'INR' }}</td>
                   <td>
-                    <a pButton pRipple [routerLink]="['/invoice/form', inv.invoiceNumber]" icon="pi pi-external-link" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="Open"></a>
+                    <a pButton pRipple [routerLink]="['/invoice/form', invoiceFormRouteId(inv)]" icon="pi pi-external-link" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="Open"></a>
                   </td>
                 </tr>
               </ng-template>
@@ -144,12 +165,14 @@
           Recent Activity
         </h3>
         <ul class="space-y-2 max-h-40 sm:max-h-48 overflow-y-auto pr-1">
-          @for (a of activityItems; track a.text) {
+          @for (a of activityItems; track $index) {
             <li class="flex gap-2 text-xs sm:text-sm">
               <i [class]="a.icon + ' ' + a.color + ' mt-0.5 flex-shrink-0'" class="pi"></i>
-              <span class="text-gray-700 dark:text-gray-300 flex-1">{{ a.text }}</span>
-              <span class="text-gray-400 dark:text-gray-500 flex-shrink-0">{{ a.time }}</span>
+              <span class="text-gray-700 dark:text-gray-300 flex-1 min-w-0 break-words">{{ a.text }}</span>
+              <span class="text-gray-400 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">{{ a.time }}</span>
             </li>
+          } @empty {
+            <li class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">No invoices yet — activity appears here from your latest invoices.</li>
           }
         </ul>
       </p-card>
@@ -186,10 +209,10 @@
           </div>
         </p-card>
         <p-card class="dashboard-card !shadow-lg bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 overflow-hidden">
-          <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-gray-100">Clients by State</h3>
+          <h3 class="text-sm sm:text-base font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-gray-100">Revenue by company</h3>
           <div class="h-48 sm:h-52 flex flex-col min-h-0">
             <div class="chart-wrapper flex-1 min-h-0">
-              <p-chart type="bar" [data]="clientStateChartData" [options]="chartOptions"></p-chart>
+              <p-chart type="bar" [data]="companyRevenueChartData" [options]="chartOptions"></p-chart>
             </div>
           </div>
         </p-card>
@@ -258,11 +281,18 @@
                   <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td class="!text-xs sm:!text-sm font-medium">{{ inv.invoiceNumber }}</td>
                     <td class="!text-xs sm:!text-sm">{{ inv.client }}</td>
-                    <td class="!text-xs sm:!text-sm">{{ inv.invoiceDate | date: 'shortDate' }}</td>
-                    <td class="!text-xs sm:!text-sm">₹{{ (invoiceAmountMap[inv.invoiceNumber]?.grandTotal ?? 0) | number }}</td>
-                    <td><span [class]="getStatusClass(inv.status)" class="!text-xs sm:!text-sm">{{ inv.status }}</span></td>
+                    <td class="!text-xs sm:!text-sm">{{ formatInvoiceDate(inv.invoiceDate) }}</td>
+                    <td class="!text-xs sm:!text-sm font-semibold">{{ inv.totalAmount | currency: 'INR' }}</td>
+                    <td class="text-center">
+                      <p-tag
+                        [icon]="getStatusIcon(inv.status)"
+                        [value]="inv.status"
+                        [severity]="getSeverity(inv.status)"
+                        styleClass="text-xs"
+                      ></p-tag>
+                    </td>
                     <td>
-                      <a pButton pRipple [routerLink]="['/invoice/form', inv.invoiceNumber]" icon="pi pi-eye" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="View"></a>
+                      <a pButton pRipple [routerLink]="['/invoice/form', invoiceFormRouteId(inv)]" icon="pi pi-eye" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="View"></a>
                     </td>
                   </tr>
                 </ng-template>
@@ -309,11 +339,18 @@
               <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td class="!text-xs sm:!text-sm font-medium">{{ invoice.invoiceNumber }}</td>
                 <td class="!text-xs sm:!text-sm">{{ invoice.client }}</td>
-                <td class="!text-xs sm:!text-sm">{{ invoice.invoiceDate | date: 'shortDate' }}</td>
-                <td class="!text-xs sm:!text-sm">₹{{ (invoiceAmountMap[invoice.invoiceNumber]?.grandTotal ?? 0) | number }}</td>
-                <td><span [class]="getStatusClass(invoice.status)" class="!text-xs sm:!text-sm">{{ invoice.status }}</span></td>
+                <td class="!text-xs sm:!text-sm">{{ formatInvoiceDate(invoice.invoiceDate) }}</td>
+                <td class="!text-xs sm:!text-sm font-semibold">{{ invoice.totalAmount | currency: 'INR' }}</td>
+                <td class="text-center">
+                  <p-tag
+                    [icon]="getStatusIcon(invoice.status)"
+                    [value]="invoice.status"
+                    [severity]="getSeverity(invoice.status)"
+                    styleClass="text-xs"
+                  ></p-tag>
+                </td>
                 <td>
-                  <a pButton pRipple [routerLink]="['/invoice/form', invoice.invoiceNumber]" icon="pi pi-eye" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="View"></a>
+                  <a pButton pRipple [routerLink]="['/invoice/form', invoiceFormRouteId(invoice)]" icon="pi pi-eye" class="p-button-text p-button-sm !min-w-0 !h-8" pTooltip="View"></a>
                 </td>
               </tr>
             </ng-template>
@@ -339,7 +376,7 @@
               <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td class="!text-xs sm:!text-sm font-medium">{{ client.name }}</td>
                 <td class="!text-xs sm:!text-sm">{{ client.totalInvoices }}</td>
-                <td class="!text-xs sm:!text-sm font-medium text-emerald-600 dark:text-emerald-400">₹{{ client.totalAmount | number }}</td>
+                <td class="!text-xs sm:!text-sm font-medium text-emerald-600 dark:text-emerald-400">{{ client.totalAmount | currency: 'INR' }}</td>
                 <td class="!text-xs sm:!text-sm">{{ client.state }}</td>
               </tr>
             </ng-template>
